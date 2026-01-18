@@ -1,0 +1,53 @@
+
+export enum Category {
+  PLAYERS = 'PLAYERS',
+  STADIUMS = 'STADIUMS',
+  CLUBS = 'CLUBS',
+  NATIONAL_TEAMS = 'NATIONAL_TEAMS',
+  COACHES = 'COACHES',
+  ALL = 'ALL'
+}
+
+export type Language = 'Bosanski' | 'English' | 'Deutsch';
+
+export interface Question {
+  id: string;
+  category: Category;
+  text: string;
+  options: string[];
+  correctAnswer: string;
+  difficulty: number;
+  explanation?: string;
+}
+
+export interface GameState {
+  nickname: string;
+  currentLevel: number;
+  selectedCategory: Category;
+  score: number;
+  questionsAnswered: number;
+  correctAnswers: number;
+  mistakes: number;
+  isGameOver: boolean;
+  language: Language;
+  history: {
+    questionId: string;
+    isCorrect: boolean;
+  }[];
+}
+
+export interface LevelConfig {
+  id: number;
+  name: Record<Language, string>;
+  minDifficulty: number;
+  maxDifficulty: number;
+  questionsPerLevel: number;
+  unlocked: boolean;
+}
+
+export interface LeaderboardEntry {
+  name: string;
+  score: number;
+  country: string;
+  isUser?: boolean;
+}
