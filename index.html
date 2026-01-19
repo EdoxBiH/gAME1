@@ -13,7 +13,6 @@
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/53/53283.png">
     
     <meta name="theme-color" content="#051622">
-    <!-- Relativna putanja osigurava rad na svim servisima -->
     <link rel="manifest" href="./manifest.json">
     
     <title>TAP FOOTBALL QUIZ 2026</title>
@@ -30,8 +29,6 @@
             color: white;
             margin: 0;
             overflow: hidden;
-            
-            /* Native App Feel */
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -82,5 +79,7 @@
 </head>
 <body class="stadium-bg">
     <div id="root"></div>
+    <!-- Script tag je obavezan za pokretanje React aplikacije -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
