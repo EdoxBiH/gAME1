@@ -3,36 +3,63 @@
 <html lang="sr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TAP FOOTBALL QUIZ 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #10b981;
+            --bg-dark: #051622;
+        }
         body {
             font-family: 'Outfit', sans-serif;
-            background: #051622;
+            background: var(--bg-dark);
             color: white;
             margin: 0;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
         .stadium-bg {
-            background: linear-gradient(rgba(5, 22, 34, 0.8), rgba(5, 22, 34, 0.9)), url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=2000');
+            background: linear-gradient(rgba(5, 22, 34, 0.85), rgba(5, 22, 34, 0.95)), 
+                        url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=2000');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
         }
         .grass-pattern {
-            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
-            background-size: 24px 24px;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
+            background-size: 32px 32px;
+            animation: move-bg 60s linear infinite;
+        }
+        @keyframes move-bg {
+            from { background-position: 0 0; }
+            to { background-position: 1000px 1000px; }
         }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
         }
         .animate-shake {
-            animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
-            animation-iteration-count: 2;
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
         }
     </style>
 <script type="importmap">

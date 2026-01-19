@@ -33,6 +33,7 @@ export interface GameState {
   history: {
     questionId: string;
     isCorrect: boolean;
+    timeTaken?: number; // Time in milliseconds
   }[];
 }
 

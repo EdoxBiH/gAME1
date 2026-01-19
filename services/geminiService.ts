@@ -3,7 +3,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Category, Question, Language } from "../types";
 import { LOCAL_QUESTIONS } from "../data/localQuestions";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+// Fix: Initializing GoogleGenAI using process.env.API_KEY directly as per guidelines
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const getDefaultExplanation = (lang: Language): string => {
   const map: Record<Language, string> = {
@@ -83,6 +84,7 @@ export const generateQuestions = async (
       }
     });
 
+    // Fix: Access response.text directly (property access) as per guidelines
     const text = response.text;
     if (!text) throw new Error("Empty response");
     
