@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.tsx';
+import App from './App';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -15,6 +15,7 @@ root.render(
   </React.StrictMode>
 );
 
+// Registracija Service Worker-a na relativnoj putanji (pomaže kod mobilnih instalacija)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
