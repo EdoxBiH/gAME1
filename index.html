@@ -3,84 +3,317 @@
 <html lang="sr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <!-- PWA / Mobile Compatibility -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Tap Football">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/53/53283.png">
-    
-    <meta name="theme-color" content="#051622">
-    <link rel="manifest" href="./manifest.json">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TAP FOOTBALL QUIZ 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #10b981;
-            --bg-dark: #051622;
-        }
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg-dark);
-            color: white;
-            margin: 0;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
-        }
+        :root { --primary: #10b981; --bg: #051622; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: white; margin: 0; overflow-x: hidden; }
         .stadium-bg {
-            background: linear-gradient(to bottom, rgba(5, 22, 34, 0.4), rgba(5, 22, 34, 0.95)), 
+            background: linear-gradient(to bottom, rgba(5, 22, 34, 0.7), rgba(5, 22, 34, 0.98)), 
                         url('https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000');
-            background-size: cover;
-            background-position: center bottom;
-            background-attachment: fixed;
+            background-size: cover; background-position: center; min-height: 100vh;
         }
-        .grass-pattern {
-            background-image: radial-gradient(circle at 2px 2px, rgba(16, 185, 129, 0.05) 1px, transparent 0);
-            background-size: 40px 40px;
-        }
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-        .btn-glow {
-            animation: pulse-glow 2s infinite;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 10px;
-        }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .btn-emerald { background: var(--primary); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3); transition: all 0.3s; }
+        .btn-emerald:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(16, 185, 129, 0.5); }
+        .btn-emerald:active { transform: scale(0.95); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: slideIn 0.5s ease forwards; }
+        .hidden { display: none !important; }
+        .wrong-shake { animation: shake 0.4s ease-in-out; border-color: #ef4444 !important; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .timer-bar { height: 4px; background: var(--primary); width: 100%; transition: width 1s linear; }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
     "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "framer-motion": "https://esm.sh/framer-motion@^12.27.1",
     "vite": "https://esm.sh/vite@^7.3.1",
-    "framer-motion": "https://esm.sh/framer-motion@^12.27.1"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>
 </head>
 <body class="stadium-bg">
-    <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+
+    <!-- POČETNI EKRAN -->
+    <div id="screen-home" class="flex flex-col items-center justify-center min-h-screen p-6 animate-in">
+        <h1 class="text-6xl font-black tracking-tighter text-center uppercase leading-none mb-4">
+            TAP FOOTBALL<br><span class="text-emerald-500">2026</span>
+        </h1>
+        <p class="text-[10px] font-bold text-white/30 tracking-[0.5em] uppercase mb-12">Najbolji fudbalski kviz na Balkanu</p>
+        
+        <div class="w-full max-w-xs space-y-4">
+            <button onclick="showScreen('screen-levels')" class="w-full btn-emerald text-white font-black py-6 rounded-3xl uppercase text-sm tracking-widest">
+                ZAPOČNI IGRU
+            </button>
+            <button onclick="toggleLeaderboard()" class="w-full glass text-white/60 font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest">
+                🏆 RANG LISTA
+            </button>
+        </div>
+        <p class="absolute bottom-8 text-[8px] text-white/10 uppercase tracking-widest font-black">Powered by Gemini AI</p>
+    </div>
+
+    <!-- IZBOR NIVOA -->
+    <div id="screen-levels" class="hidden flex flex-col items-center justify-center min-h-screen p-6 animate-in">
+        <h2 class="text-3xl font-black uppercase mb-10 tracking-tight">IZABERI NIVO</h2>
+        <div id="levels-container" class="w-full max-w-sm space-y-4">
+            <!-- Dinamički se puni -->
+        </div>
+        <button onclick="showScreen('screen-home')" class="mt-12 text-[10px] font-black text-white/20 uppercase tracking-widest">Nazad</button>
+    </div>
+
+    <!-- KVIZ EKRAN -->
+    <div id="screen-quiz" class="hidden flex flex-col min-h-screen p-4 animate-in">
+        <header class="flex justify-between items-center p-4 glass rounded-3xl mb-4 mt-10">
+            <div>
+                <p id="ui-level-name" class="text-white/30 text-[7px] font-black uppercase">LEVEL 1</p>
+                <p id="ui-score" class="text-lg font-black text-yellow-400">0</p>
+            </div>
+            <div class="flex flex-col items-center">
+                <p class="text-white/30 text-[7px] font-black uppercase mb-1">ŽIVOTI</p>
+                <div id="ui-lives" class="flex gap-1 text-xs">❤️❤️❤️❤️❤️</div>
+            </div>
+            <div class="text-right">
+                <p id="ui-progress" class="text-white/30 text-[7px] font-black uppercase">1/30</p>
+                <span id="ui-streak" class="bg-white/5 px-2 py-0.5 rounded-full text-[9px] font-black text-white/20">x0</span>
+            </div>
+        </header>
+
+        <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden mb-8">
+            <div id="ui-progress-bar" class="h-full bg-emerald-500 w-0 transition-all duration-500"></div>
+        </div>
+
+        <div id="question-card" class="glass rounded-[2rem] p-6 relative overflow-hidden">
+            <div id="timer-line" class="absolute top-0 left-0 timer-bar"></div>
+            <h2 id="question-text" class="text-lg font-bold text-center mb-8 min-h-[4rem] flex items-center justify-center">Učitavam pitanje...</h2>
+            <div id="options-container" class="grid grid-cols-1 gap-2">
+                <!-- Dugmad za odgovore -->
+            </div>
+            <div id="explanation-box" class="hidden mt-6 p-4 bg-white/5 rounded-2xl border border-white/5 text-center">
+                <p id="explanation-text" class="text-[10px] text-white/50 italic"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- KRAJ IGRE -->
+    <div id="screen-gameover" class="hidden flex flex-col items-center justify-center min-h-screen p-6 animate-in">
+        <div class="glass p-10 rounded-[3rem] w-full max-w-sm text-center">
+            <h1 id="gameover-title" class="text-4xl font-black mb-2 text-rose-500 uppercase">KRAJ IGRE!</h1>
+            <p id="gameover-msg" class="text-white/40 text-xs mb-8">Više sreće sledeći put</p>
+            
+            <div class="grid grid-cols-2 gap-3 mb-10">
+                <div class="glass p-4 rounded-2xl">
+                    <span class="text-[8px] font-black text-white/20 uppercase block">TAČNO</span>
+                    <p id="final-correct" class="text-2xl font-black text-emerald-500">0</p>
+                </div>
+                <div class="glass p-4 rounded-2xl">
+                    <span class="text-[8px] font-black text-white/20 uppercase block">BODOVI</span>
+                    <p id="final-score" class="text-2xl font-black text-white">0</p>
+                </div>
+            </div>
+
+            <button onclick="resetGame()" class="w-full btn-emerald py-5 rounded-2xl font-black uppercase text-xs tracking-widest mb-3">POČETNA</button>
+            <button onclick="startQuiz(gameState.currentLevel)" class="w-full glass py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest text-white/40">POKUŠAJ PONOVO</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenAI, Type } from "https://esm.sh/@google/genai";
+
+        // --- KONFIGURACIJA ---
+        const API_KEY = ""; // Ovde zalepi svoj ključ ako želiš AI, inače radi offline mod
+        const LOCAL_QUESTIONS = [
+            { text: "Ko je osvojio Zlatnu loptu 2023. godine?", options: ["Mbappe", "Haaland", "Messi", "Rodri"], correct: "Messi", exp: "Messi je osvojio nakon osvajanja SP u Kataru." },
+            { text: "Koji klub ima nadimak 'Kraljevski klub'?", options: ["Barcelona", "Real Madrid", "Bayern", "Juventus"], correct: "Real Madrid", exp: "Real Madrid je dobio titulu 'Real' (kraljevski) od kralja Alfonsa XIII." },
+            { text: "Gde je odigrano finale Lige Šampiona 2024?", options: ["Istanbul", "Wembley", "Pariz", "Minhen"], correct: "Wembley", exp: "Real Madrid je pobedio Dortmund na Wembleyu." },
+            { text: "Ko je rekorder po broju golova na jednom Svetskom prvenstvu?", options: ["Pele", "Klose", "Just Fontaine", "Ronaldo"], correct: "Just Fontaine", exp: "Postigao je 13 golova 1958. godine." }
+        ];
+
+        let gameState = {
+            currentLevel: 1,
+            score: 0,
+            lives: 5,
+            progress: 0,
+            correctCount: 0,
+            streak: 0,
+            unlockedLevels: [1],
+            questions: []
+        };
+
+        const levels = [
+            { id: 1, name: "Početnik", diff: 1 },
+            { id: 2, name: "Ekspert", diff: 5 },
+            { id: 3, name: "Legenda", diff: 10 }
+        ];
+
+        // --- NAVIGACIJA ---
+        window.showScreen = (screenId) => {
+            document.querySelectorAll('body > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+            if(screenId === 'screen-levels') renderLevels();
+        };
+
+        function renderLevels() {
+            const container = document.getElementById('levels-container');
+            container.innerHTML = '';
+            levels.forEach(lvl => {
+                const isUnlocked = gameState.unlockedLevels.includes(lvl.id);
+                const div = document.createElement('div');
+                div.className = `p-6 rounded-[2rem] glass flex justify-between items-center cursor-pointer transition-all ${isUnlocked ? 'border-emerald-500/30' : 'opacity-40 grayscale'}`;
+                div.onclick = () => isUnlocked && startQuiz(lvl.id);
+                div.innerHTML = `
+                    <div>
+                        <span class="text-[8px] font-black text-white/20 uppercase">LEVEL ${lvl.id}</span>
+                        <h3 class="text-xl font-black uppercase">${lvl.name}</h3>
+                    </div>
+                    <span>${isUnlocked ? 'KRENI →' : '🔒'}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- LOGIKA IGRE ---
+        window.startQuiz = async (levelId) => {
+            gameState.currentLevel = levelId;
+            gameState.score = 0;
+            gameState.lives = 5;
+            gameState.progress = 0;
+            gameState.correctCount = 0;
+            gameState.streak = 0;
+            gameState.questions = [];
+            
+            showScreen('screen-quiz');
+            updateUI();
+            nextQuestion();
+        };
+
+        async function nextQuestion() {
+            if (gameState.progress >= 30 || gameState.lives <= 0) {
+                endGame();
+                return;
+            }
+
+            const q = await fetchQuestion();
+            renderQuestion(q);
+        }
+
+        async function fetchQuestion() {
+            if (!API_KEY) return LOCAL_QUESTIONS[Math.floor(Math.random() * LOCAL_QUESTIONS.length)];
+            
+            try {
+                const ai = new GoogleGenAI({ apiKey: API_KEY });
+                const prompt = `Generiši 1 unikatno fudbalsko pitanje. Težina: ${levels.find(l=>l.id===gameState.currentLevel).diff}/10. Jezik: Srpski. JSON format: { "text": "", "options": ["", "", "", ""], "correct": "", "exp": "" }`;
+                const response = await ai.models.generateContent({
+                    model: 'gemini-1.5-flash',
+                    contents: prompt,
+                    config: { responseMimeType: "application/json" }
+                });
+                return JSON.parse(response.text);
+            } catch (e) {
+                return LOCAL_QUESTIONS[Math.floor(Math.random() * LOCAL_QUESTIONS.length)];
+            }
+        }
+
+        function renderQuestion(q) {
+            document.getElementById('question-text').innerText = q.text;
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            document.getElementById('explanation-box').classList.add('hidden');
+            
+            const timerLine = document.getElementById('timer-line');
+            timerLine.style.width = '100%';
+            
+            let timeLimit = 15;
+            const timer = setInterval(() => {
+                timeLimit--;
+                timerLine.style.width = `${(timeLimit / 15) * 100}%`;
+                if (timeLimit <= 0) {
+                    clearInterval(timer);
+                    handleAnswer(null, q);
+                }
+            }, 1000);
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "p-4 glass rounded-2xl text-xs font-bold text-left hover:bg-white/10 transition-all";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    clearInterval(timer);
+                    handleAnswer(opt, q);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selected, q) {
+            const isCorrect = selected === q.correct;
+            const buttons = document.querySelectorAll('#options-container button');
+            
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if(btn.innerText === q.correct) btn.classList.add('bg-emerald-500', 'border-emerald-400');
+                else if(btn.innerText === selected) btn.classList.add('bg-rose-500', 'border-rose-400');
+                else btn.classList.add('opacity-20');
+            });
+
+            if(isCorrect) {
+                gameState.score += 100 + (gameState.streak * 20);
+                gameState.correctCount++;
+                gameState.streak++;
+            } else {
+                gameState.lives--;
+                gameState.streak = 0;
+                document.getElementById('question-card').classList.add('wrong-shake');
+                setTimeout(() => document.getElementById('question-card').classList.remove('wrong-shake'), 400);
+            }
+
+            gameState.progress++;
+            document.getElementById('explanation-text').innerText = q.exp;
+            document.getElementById('explanation-box').classList.remove('hidden');
+
+            setTimeout(() => {
+                updateUI();
+                nextQuestion();
+            }, 3000);
+        }
+
+        function updateUI() {
+            document.getElementById('ui-level-name').innerText = `LEVEL ${gameState.currentLevel}`;
+            document.getElementById('ui-score').innerText = gameState.score;
+            document.getElementById('ui-progress').innerText = `${gameState.progress}/30`;
+            document.getElementById('ui-progress-bar').style.width = `${(gameState.progress / 30) * 100}%`;
+            document.getElementById('ui-lives').innerText = "❤️".repeat(Math.max(0, gameState.lives)) + "🖤".repeat(Math.max(0, 5 - gameState.lives));
+            document.getElementById('ui-streak').innerText = `x${gameState.streak}`;
+            document.getElementById('ui-streak').className = gameState.streak >= 3 ? 'bg-orange-500 px-2 py-0.5 rounded-full text-[9px] font-black text-white' : 'bg-white/5 px-2 py-0.5 rounded-full text-[9px] font-black text-white/20';
+        }
+
+        function endGame() {
+            const isWin = gameState.progress >= 30 && gameState.lives > 0;
+            if(isWin && !gameState.unlockedLevels.includes(gameState.currentLevel + 1)) {
+                gameState.unlockedLevels.push(gameState.currentLevel + 1);
+            }
+            
+            document.getElementById('gameover-title').innerText = isWin ? "POBEDA!" : "KRAJ IGRE!";
+            document.getElementById('gameover-title').className = isWin ? "text-4xl font-black mb-2 text-emerald-500 uppercase" : "text-4xl font-black mb-2 text-rose-500 uppercase";
+            document.getElementById('final-correct').innerText = gameState.correctCount;
+            document.getElementById('final-score').innerText = gameState.score;
+            showScreen('screen-gameover');
+        }
+
+        window.resetGame = () => {
+            showScreen('screen-home');
+        };
+
+        window.toggleLeaderboard = () => {
+            alert("Leaderboard u 2026 stiže uskoro!");
+        };
+    </script>
 </body>
 </html>
