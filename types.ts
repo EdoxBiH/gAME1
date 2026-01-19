@@ -1,4 +1,3 @@
-
 export enum Category {
   PLAYERS = 'PLAYERS',
   STADIUMS = 'STADIUMS',
@@ -50,5 +49,6 @@ export interface LeaderboardEntry {
   name: string;
   score: number;
   country: string;
+  timestamp: number;
   isUser?: boolean;
 }
