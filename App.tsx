@@ -16,6 +16,8 @@ const BASE_LEADERBOARD: LeaderboardEntry[] = [
   { name: "Edin_Dž", score: 2850, country: "🇧🇦", timestamp: Date.now() - 3600000 },
   { name: "Marco_R", score: 2720, country: "🇩🇪", timestamp: Date.now() - 7200000 },
   { name: "Luka_M", score: 2540, country: "🇭🇷", timestamp: Date.now() - 10800000 },
+  { name: "Zizou_5", score: 2310, country: "🇫🇷", timestamp: Date.now() - 14400000 },
+  { name: "CR7_Legend", score: 2100, country: "🇵🇹", timestamp: Date.now() - 18000000 },
 ];
 
 const TRANSLATIONS = {
@@ -85,7 +87,6 @@ const App: React.FC = () => {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [loading, setLoading] = useState(false);
-  const [userRank, setUserRank] = useState<number | null>(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   
   const [gameState, setGameState] = useState<GameState>({
@@ -97,12 +98,12 @@ const App: React.FC = () => {
     correctAnswers: 0,
     mistakes: 0,
     isGameOver: false,
-    language: 'Bosanski',
+    language: 'English',
     history: [],
   });
 
   const [streak, setStreak] = useState(0);
-  const [step, setStep] = useState<'HOME' | 'LEVEL_SELECT' | 'NICKNAME_INPUT' | 'CATEGORY_SELECT' | 'QUIZ'>('HOME');
+  const [step, setStep] = useState<'HOME' | 'LEVEL_SELECT' | 'NICKNAME_INPUT' | 'CATEGORY_SELECT' | 'QUIZ' | 'SCREENSHOT_UTILITY'>('HOME');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
@@ -208,47 +209,19 @@ const App: React.FC = () => {
     if (!isOver) setCurrentQuestionIndex(prev => prev + 1);
   };
 
-  const handleShareResult = async () => {
-    const scoreStr = gameState.score.toString();
-    const message = t('shareText').replace('{score}', scoreStr);
-    
-    let shareUrl = '';
-    try {
-      const rawUrl = window.location.href;
-      if (!rawUrl.startsWith('http')) {
-        shareUrl = "https://football-quiz-2026.vercel.app";
-      } else {
-        const parsed = new URL(rawUrl);
-        shareUrl = parsed.origin + parsed.pathname;
-      }
-    } catch (e) {
-      shareUrl = "https://football-quiz-2026.vercel.app";
-    }
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'TAP FOOTBALL QUIZ 2026',
-          text: message,
-          url: shareUrl,
-        });
-      } catch (error: any) {
-        if (error.name !== 'AbortError') {
-          copyToClipboard(message + " " + shareUrl);
-        }
-      }
-    } else {
-      copyToClipboard(message + " " + shareUrl);
-    }
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert(t('copied'));
-  };
-
   const t = (key: keyof typeof TRANSLATIONS) => TRANSLATIONS[key][gameState.language];
   const isWin = gameState.questionsAnswered >= 30 && gameState.mistakes < 5;
+
+  // Mock Question for screenshots
+  const MOCK_QUESTION: Question = {
+    id: 'mock-1',
+    category: Category.CLUBS,
+    text: "Which club has won the most UEFA Champions League titles as of 2024?",
+    options: ["AC Milan", "Liverpool", "Real Madrid", "Bayern Munich"],
+    correctAnswer: "Real Madrid",
+    difficulty: 5,
+    explanation: "Real Madrid holds the record with 15 European Cup/Champions League titles."
+  };
 
   return (
     <div className="min-h-screen grass-pattern overflow-hidden font-['Outfit'] flex flex-col relative text-white" onClick={handleInteraction}>
@@ -310,6 +283,13 @@ const App: React.FC = () => {
               >
                 🏆 {t('leaderboard')}
               </button>
+
+              <button 
+                onClick={() => setStep('SCREENSHOT_UTILITY')}
+                className="w-full mt-10 text-[9px] font-black text-white/20 uppercase tracking-[0.5em] hover:text-white/40"
+              >
+                📷 Store Assets Generator
+              </button>
             </div>
 
             <button 
@@ -318,6 +298,121 @@ const App: React.FC = () => {
             >
               {isMuted ? '🔇' : '🔊'}
             </button>
+          </motion.div>
+        ) : step === 'SCREENSHOT_UTILITY' ? (
+          <motion.div 
+            key="utility"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[200] bg-[#051622] overflow-y-auto p-8 custom-scrollbar"
+          >
+             <div className="max-w-4xl mx-auto space-y-32 flex flex-col items-center">
+                <header className="w-full flex justify-between items-center border-b border-white/10 pb-6 mb-10">
+                   <div>
+                    <h2 className="text-2xl font-black italic tracking-tighter text-emerald-500">PLAY STORE ASSET GENERATOR</h2>
+                    <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Use browser "Inspect (F12)" -> Mobile Mode for best captures</p>
+                   </div>
+                   <button onClick={() => setStep('HOME')} className="bg-white text-black font-black px-8 py-3 rounded-full text-[10px] uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">Exit Generator</button>
+                </header>
+
+                {/* ASSET 1: THE CHALLENGE */}
+                <div className="flex flex-col items-center text-center">
+                  <h3 className="text-emerald-500 font-black text-xs uppercase tracking-[0.3em] mb-4">Screenshot 1: The Brand</h3>
+                  <div className="w-[360px] h-[640px] bg-black rounded-[3rem] border-[8px] border-white/10 relative overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
+                    <div className="absolute inset-0 stadium-bg opacity-40" />
+                    <div className="absolute top-10 left-0 w-full px-6 z-10">
+                       <h2 className="text-white font-black text-2xl tracking-tighter uppercase leading-none italic">THE ULTIMATE<br/><span className="text-emerald-500">FOOTBALL CHALLENGE</span></h2>
+                    </div>
+                    <div className="relative h-full flex flex-col items-center justify-center px-10">
+                       <h1 className="text-5xl font-black text-center uppercase tracking-tighter leading-tight mb-2">TAP FOOTBALL<br/><span className="text-emerald-500">2026</span></h1>
+                       <p className="text-[8px] font-bold text-white/40 tracking-[0.4em] uppercase mb-16">Global Trivia Experience</p>
+                       <div className="w-full space-y-4">
+                          <div className="w-full bg-emerald-500 h-14 rounded-2xl flex items-center justify-center font-black text-xs uppercase tracking-widest">Start Game</div>
+                          <div className="w-full bg-white/5 border border-white/10 h-12 rounded-xl flex items-center justify-center font-black text-[9px] uppercase tracking-widest text-white/50">Leaderboards</div>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ASSET 2: GAMEPLAY */}
+                <div className="flex flex-col items-center text-center">
+                  <h3 className="text-emerald-500 font-black text-xs uppercase tracking-[0.3em] mb-4">Screenshot 2: AI Gameplay</h3>
+                  <div className="w-[360px] h-[640px] bg-black rounded-[3rem] border-[8px] border-white/10 relative overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
+                    <div className="absolute inset-0 stadium-bg opacity-20" />
+                    <div className="absolute top-10 left-0 w-full px-6 z-10">
+                       <h2 className="text-white font-black text-2xl tracking-tighter uppercase leading-none italic">DYNAMIC<br/><span className="text-emerald-500">AI QUESTIONS</span></h2>
+                    </div>
+                    <div className="relative h-full flex flex-col p-4 pt-32">
+                      <header className="flex justify-between items-center bg-black/80 p-3 rounded-2xl border border-white/10 backdrop-blur-xl mb-4">
+                         <div><p className="text-white/20 text-[6px] font-black uppercase">LVL 2</p><p className="text-xs font-black text-yellow-400">1,450</p></div>
+                         <div className="flex gap-0.5 text-[8px]">❤️❤️<span className="opacity-20">❤️❤️❤️</span></div>
+                         <div className="text-right"><p className="text-white/20 text-[6px] font-black uppercase">Q 12/30</p><span className="bg-orange-500 px-1 py-0.5 rounded text-[7px] font-black italic">STREAK x4</span></div>
+                      </header>
+                      <QuizCard question={MOCK_QUESTION} onAnswer={() => {}} disabled={true} isMuted={true} language="English" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ASSET 3: PROGRESSION */}
+                <div className="flex flex-col items-center text-center">
+                  <h3 className="text-emerald-500 font-black text-xs uppercase tracking-[0.3em] mb-4">Screenshot 3: Progression</h3>
+                  <div className="w-[360px] h-[640px] bg-black rounded-[3rem] border-[8px] border-white/10 relative overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
+                    <div className="absolute inset-0 stadium-bg opacity-30" />
+                    <div className="absolute top-10 left-0 w-full px-6 z-10">
+                       <h2 className="text-white font-black text-2xl tracking-tighter uppercase leading-none italic">CHOOSE YOUR<br/><span className="text-emerald-500">EXPERTISE LEVEL</span></h2>
+                    </div>
+                    <div className="relative h-full flex flex-col p-6 pt-36 space-y-3">
+                       {INITIAL_LEVELS.map(l => (
+                         <div key={l.id} className={`p-4 rounded-3xl border ${l.id === 1 ? 'bg-black/80 border-emerald-500' : 'bg-black/40 border-white/10 opacity-60'} flex justify-between items-center`}>
+                           <div>
+                            <span className="text-[7px] font-black text-white/30 uppercase">LEVEL {l.id}</span>
+                            <h4 className="text-sm font-black uppercase">{l.name.English}</h4>
+                           </div>
+                           <span className="text-xs">{l.id === 1 ? 'GO →' : '🔒'}</span>
+                         </div>
+                       ))}
+                       <div className="grid grid-cols-2 gap-2 mt-6">
+                         <div className="bg-emerald-500/20 border border-emerald-500/40 p-3 rounded-2xl text-center"><p className="text-[7px] font-bold">PLAYERS</p></div>
+                         <div className="bg-white/5 border border-white/10 p-3 rounded-2xl text-center opacity-40"><p className="text-[7px] font-bold">STADIUMS</p></div>
+                         <div className="bg-white/5 border border-white/10 p-3 rounded-2xl text-center opacity-40"><p className="text-[7px] font-bold">CLUBS</p></div>
+                         <div className="bg-white/5 border border-white/10 p-3 rounded-2xl text-center opacity-40"><p className="text-[7px] font-bold">COACHES</p></div>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ASSET 4: RANKING */}
+                <div className="flex flex-col items-center text-center">
+                  <h3 className="text-emerald-500 font-black text-xs uppercase tracking-[0.3em] mb-4">Screenshot 4: Social/Leaderboard</h3>
+                  <div className="w-[360px] h-[640px] bg-black rounded-[3rem] border-[8px] border-white/10 relative overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
+                    <div className="absolute inset-0 stadium-bg opacity-40" />
+                    <div className="absolute top-10 left-0 w-full px-6 z-10 text-center">
+                       <h2 className="text-white font-black text-2xl tracking-tighter uppercase italic mb-1">CLIMB TO THE TOP</h2>
+                       <p className="text-[8px] font-black text-emerald-500 tracking-[0.3em] uppercase">Global Ranking System</p>
+                    </div>
+                    <div className="relative h-full flex flex-col p-6 pt-36">
+                       <div className="bg-black/90 rounded-[2rem] border border-white/10 p-4 space-y-2 overflow-hidden h-full">
+                          {BASE_LEADERBOARD.map((u, i) => (
+                            <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${i === 0 ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-white/5 border-white/5'}`}>
+                               <div className="flex items-center gap-3">
+                                 <span className="font-black text-[9px] w-4 opacity-40">{i+1}.</span>
+                                 <span className="font-bold text-xs">{u.name}</span>
+                               </div>
+                               <span className="text-emerald-400 font-black text-xs">{u.score}</span>
+                            </div>
+                          ))}
+                          <div className="pt-4 mt-auto">
+                             <div className="bg-emerald-500 h-12 rounded-xl flex items-center justify-center font-black text-[10px] uppercase tracking-widest">Share My Result</div>
+                          </div>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                <footer className="w-full text-center pb-20 opacity-40">
+                   <p className="text-[9px] font-black uppercase tracking-widest">Tip: Right-click on the frames above and select "Save Image As" if using a capture tool, or just screenshot this page.</p>
+                </footer>
+             </div>
           </motion.div>
         ) : step === 'LEVEL_SELECT' ? (
           <motion.div 
@@ -396,9 +491,6 @@ const App: React.FC = () => {
                   </div>
                   <div className="space-y-4">
                     <button onClick={() => setStep('HOME')} className="w-full bg-emerald-500 font-black py-5 rounded-2xl uppercase text-xs tracking-widest">{t('playAgain')}</button>
-                    <button onClick={handleShareResult} className="w-full bg-white/10 text-white font-black py-4 rounded-2xl border border-emerald-500/40 uppercase text-[10px] tracking-widest flex items-center justify-center gap-2">
-                       <span>📤</span> {t('shareBtn')}
-                    </button>
                     <button onClick={() => handleStartQuiz(gameState.selectedCategory)} className="w-full bg-white/5 text-white/70 font-black py-4 rounded-2xl border border-white/10 uppercase text-[10px] tracking-widest">{t('retry')}</button>
                   </div>
                 </div>
