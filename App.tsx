@@ -58,7 +58,7 @@ const TRANSLATIONS = {
     English: "My score is {score} in TAP FOOTBALL QUIZ 2026! Can you do better?",
     Deutsch: "Mein Punktestand ist {score} in TAP FOOTBALL QUIZ 2026! Kannst du das toppen?"
   },
-  copied: { Bosanski: "Kopirano u clipboard!", English: "Copied to clipboard!", Deutsch: "Kopiert!" }
+  copied: { Bosanski: "Kopirano!", English: "Copied!", Deutsch: "Kopiert!" }
 };
 
 const LANGUAGE_FLAGS: Record<Language, string> = {
@@ -190,9 +190,17 @@ const App: React.FC = () => {
         timestamp: Date.now(),
         isUser: true
       };
-      setLeaderboard(prev => [...prev, newEntry].sort((a, b) => b.score - a.score).slice(0, 20));
+      setLeaderboard(prev => {
+        const updated = [...prev, newEntry].sort((a, b) => b.score - a.score).slice(0, 20);
+        localStorage.setItem('quiz_leaderboard', JSON.stringify(updated));
+        return updated;
+      });
       if (gameState.questionsAnswered + 1 >= 30 && newMistakes < 5) {
-        setLevels(prev => prev.map(l => l.id === gameState.currentLevel + 1 ? {...l, unlocked: true} : l));
+        setLevels(prev => {
+          const updated = prev.map(l => l.id === gameState.currentLevel + 1 ? {...l, unlocked: true} : l);
+          localStorage.setItem('quiz_levels', JSON.stringify(updated));
+          return updated;
+        });
       }
     }
 
@@ -207,6 +215,27 @@ const App: React.FC = () => {
 
     setStreak(newStreak);
     if (!isOver) setCurrentQuestionIndex(prev => prev + 1);
+  };
+
+  const handleShare = async () => {
+    const text = t('shareText').replace('{score}', gameState.score.toString());
+    const url = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'TAP FOOTBALL QUIZ 2026',
+          text: text,
+          url: url,
+        });
+      } catch (err) {
+        console.error('Share failed:', err);
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      navigator.clipboard.writeText(`${text} ${url}`);
+      alert(t('copied'));
+    }
   };
 
   const t = (key: keyof typeof TRANSLATIONS) => TRANSLATIONS[key][gameState.language];
@@ -315,7 +344,7 @@ const App: React.FC = () => {
                    <button onClick={() => setStep('HOME')} className="bg-white text-black font-black px-8 py-3 rounded-full text-[10px] uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">Exit Generator</button>
                 </header>
 
-                {/* ASSET 1: THE CHALLENGE */}
+                {/* ASSET 1: THE BRAND */}
                 <div className="flex flex-col items-center text-center">
                   <h3 className="text-emerald-500 font-black text-xs uppercase tracking-[0.3em] mb-4">Screenshot 1: The Brand</h3>
                   <div className="w-[360px] h-[640px] bg-black rounded-[3rem] border-[8px] border-white/10 relative overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
@@ -376,34 +405,6 @@ const App: React.FC = () => {
                          <div className="bg-white/5 border border-white/10 p-3 rounded-2xl text-center opacity-40"><p className="text-[7px] font-bold">STADIUMS</p></div>
                          <div className="bg-white/5 border border-white/10 p-3 rounded-2xl text-center opacity-40"><p className="text-[7px] font-bold">CLUBS</p></div>
                          <div className="bg-white/5 border border-white/10 p-3 rounded-2xl text-center opacity-40"><p className="text-[7px] font-bold">COACHES</p></div>
-                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ASSET 4: RANKING */}
-                <div className="flex flex-col items-center text-center">
-                  <h3 className="text-emerald-500 font-black text-xs uppercase tracking-[0.3em] mb-4">Screenshot 4: Social/Leaderboard</h3>
-                  <div className="w-[360px] h-[640px] bg-black rounded-[3rem] border-[8px] border-white/10 relative overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
-                    <div className="absolute inset-0 stadium-bg opacity-40" />
-                    <div className="absolute top-10 left-0 w-full px-6 z-10 text-center">
-                       <h2 className="text-white font-black text-2xl tracking-tighter uppercase italic mb-1">CLIMB TO THE TOP</h2>
-                       <p className="text-[8px] font-black text-emerald-500 tracking-[0.3em] uppercase">Global Ranking System</p>
-                    </div>
-                    <div className="relative h-full flex flex-col p-6 pt-36">
-                       <div className="bg-black/90 rounded-[2rem] border border-white/10 p-4 space-y-2 overflow-hidden h-full">
-                          {BASE_LEADERBOARD.map((u, i) => (
-                            <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${i === 0 ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-white/5 border-white/5'}`}>
-                               <div className="flex items-center gap-3">
-                                 <span className="font-black text-[9px] w-4 opacity-40">{i+1}.</span>
-                                 <span className="font-bold text-xs">{u.name}</span>
-                               </div>
-                               <span className="text-emerald-400 font-black text-xs">{u.score}</span>
-                            </div>
-                          ))}
-                          <div className="pt-4 mt-auto">
-                             <div className="bg-emerald-500 h-12 rounded-xl flex items-center justify-center font-black text-[10px] uppercase tracking-widest">Share My Result</div>
-                          </div>
                        </div>
                     </div>
                   </div>
@@ -490,6 +491,9 @@ const App: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-4">
+                    <button onClick={handleShare} className="w-full bg-white/10 border border-white/10 text-white font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest flex items-center justify-center gap-2">
+                       <span>📤</span> {t('shareBtn')}
+                    </button>
                     <button onClick={() => setStep('HOME')} className="w-full bg-emerald-500 font-black py-5 rounded-2xl uppercase text-xs tracking-widest">{t('playAgain')}</button>
                     <button onClick={() => handleStartQuiz(gameState.selectedCategory)} className="w-full bg-white/5 text-white/70 font-black py-4 rounded-2xl border border-white/10 uppercase text-[10px] tracking-widest">{t('retry')}</button>
                   </div>

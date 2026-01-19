@@ -15,11 +15,11 @@ root.render(
   </React.StrictMode>
 );
 
-// Registracija Service Worker-a za offline rad (Play Store zahtjev)
+// Registracija Service Worker-a na relativnoj putanji (pomaže kod mobilnih instalacija)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(err => {
-      console.log('ServiceWorker registration failed: ', err);
-    });
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('[SW] Registered successfully', reg.scope))
+      .catch(err => console.log('[SW] Registration failed: ', err));
   });
 }

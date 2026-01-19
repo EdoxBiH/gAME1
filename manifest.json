@@ -2,9 +2,10 @@
 {
   "name": "TAP FOOTBALL QUIZ 2026",
   "short_name": "TapFootball26",
-  "description": "The ultimate multi-language football quiz game for 2026. Test your knowledge across clubs, players, stadiums and history with AI-generated questions.",
+  "description": "The ultimate multi-language football quiz game for 2026. Test your knowledge with AI-generated questions.",
   "id": "com.tapfootballquiz.2026",
-  "start_url": "/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#051622",
   "theme_color": "#10b981",
@@ -13,7 +14,43 @@
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
       "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
@@ -30,14 +67,7 @@
       "sizes": "1080x1920",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Home Screen of Tap Football Quiz"
-    },
-    {
-      "src": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1080",
-      "sizes": "1920x1080",
-      "type": "image/jpeg",
-      "form_factor": "wide",
-      "label": "Experience the game on large screens"
+      "label": "Home Screen"
     }
   ]
 }
