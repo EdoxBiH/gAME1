@@ -1,0 +1,43 @@
+
+{
+  "name": "TAP FOOTBALL QUIZ 2026",
+  "short_name": "TapFootball26",
+  "description": "The ultimate multi-language football quiz game for 2026. Test your knowledge across clubs, players, stadiums and history with AI-generated questions.",
+  "id": "com.tapfootballquiz.2026",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#051622",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "categories": ["games", "sports"],
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=1080",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Home Screen of Tap Football Quiz"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1080",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Experience the game on large screens"
+    }
+  ]
+}

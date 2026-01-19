@@ -4,9 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA / Mobile Compatibility -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Tap Football">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/53/53283.png">
+    
+    <meta name="theme-color" content="#051622">
+    <link rel="manifest" href="/manifest.json">
+    
     <title>TAP FOOTBALL QUIZ 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -20,44 +28,41 @@
             background: var(--bg-dark);
             color: white;
             margin: 0;
-            overflow-x: hidden;
+            overflow: hidden;
+            
+            /* Native App Feel */
             -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
             user-select: none;
+            touch-action: manipulation;
         }
         .stadium-bg {
-            background: linear-gradient(rgba(5, 22, 34, 0.85), rgba(5, 22, 34, 0.95)), 
-                        url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=2000');
+            background: linear-gradient(to bottom, rgba(5, 22, 34, 0.4), rgba(5, 22, 34, 0.95)), 
+                        url('https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000');
             background-size: cover;
-            background-position: center;
+            background-position: center bottom;
             background-attachment: fixed;
         }
         .grass-pattern {
-            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
-            background-size: 32px 32px;
-            animation: move-bg 60s linear infinite;
+            background-image: radial-gradient(circle at 2px 2px, rgba(16, 185, 129, 0.05) 1px, transparent 0);
+            background-size: 40px 40px;
         }
-        @keyframes move-bg {
-            from { background-position: 0 0; }
-            to { background-position: 1000px 1000px; }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-6px); }
-            40% { transform: translateX(6px); }
-            60% { transform: translateX(-3px); }
-            80% { transform: translateX(3px); }
+        .btn-glow {
+            animation: pulse-glow 2s infinite;
         }
-        .animate-shake {
-            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
+        .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
         }
-        ::-webkit-scrollbar-track {
+        .custom-scrollbar::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.05);
         }
-        ::-webkit-scrollbar-thumb {
+        .custom-scrollbar::-webkit-scrollbar-thumb {
             background: var(--primary);
             border-radius: 10px;
         }

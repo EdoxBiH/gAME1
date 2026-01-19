@@ -3,8 +3,8 @@ const SFX_URLS = {
   correct: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
   wrong: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3',
   tick: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
-  // A more stable sports-themed background track
-  bg: 'https://assets.mixkit.co/music/preview/mixkit-stadium-crowd-loop-375.mp3' 
+  // Nova dinamična sportska muzika
+  bg: 'https://assets.mixkit.co/music/preview/mixkit-sports-highlights-51.mp3' 
 };
 
 class AudioService {
@@ -21,7 +21,7 @@ class AudioService {
       
       this.bgMusic = new Audio(SFX_URLS.bg);
       this.bgMusic.loop = true;
-      this.bgMusic.volume = 0.1; // Moderate volume as requested
+      this.bgMusic.volume = 0.15; // Blago pojačan volumen muzike
     }
   }
 
