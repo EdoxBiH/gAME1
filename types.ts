@@ -1,3 +1,4 @@
+
 export enum Category {
   PLAYERS = 'PLAYERS',
   STADIUMS = 'STADIUMS',
@@ -32,7 +33,7 @@ export interface GameState {
   history: {
     questionId: string;
     isCorrect: boolean;
-    timeTaken?: number; // Time in milliseconds
+    timeTaken?: number;
   }[];
 }
 
@@ -51,4 +52,22 @@ export interface LeaderboardEntry {
   country: string;
   timestamp: number;
   isUser?: boolean;
+}
+
+export interface Achievement {
+  id: string;
+  icon: string;
+  name: Record<Language, string>;
+  description: Record<Language, string>;
+  requirement: number;
+  type: 'total_correct' | 'streak' | 'perfect_game' | 'level_completed';
+}
+
+export interface UserStats {
+  totalPoints: number;
+  totalCorrect: number;
+  totalAnswered: number;
+  maxStreak: number;
+  levelsCompleted: number[];
+  unlockedAchievements: string[];
 }

@@ -1,47 +1,20 @@
 
 {
   "name": "TAP FOOTBALL QUIZ 2026",
-  "short_name": "TapFootball26",
-  "description": "The ultimate multi-language football quiz game for 2026. Test your knowledge with AI-generated questions.",
-  "id": "com.tapfootballquiz.2026",
-  "start_url": "./index.html",
+  "short_name": "TapFootball",
+  "description": "Vrhunski fudbalski kviz sa AI generisanim pitanjima. Testiraj svoje znanje u realnom vremenu.",
+  "id": "com.tapfootball.2026",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#051622",
   "theme_color": "#10b981",
   "orientation": "portrait",
-  "categories": ["games", "sports"],
+  "categories": ["games", "sports", "education"],
+  "lang": "sr",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any"
-    },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
       "sizes": "192x192",
@@ -50,7 +23,7 @@
     },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
-      "sizes": "384x384",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
@@ -58,7 +31,7 @@
       "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
@@ -67,7 +40,14 @@
       "sizes": "1080x1920",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Home Screen"
+      "label": "Glavni ekran kviza"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1920",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Pregled na desktopu"
     }
   ]
 }

@@ -13,7 +13,6 @@
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/53/53283.png">
     
     <meta name="theme-color" content="#051622">
-    <!-- Relativna putanja osigurava rad na svim servisima -->
     <link rel="manifest" href="./manifest.json">
     
     <title>TAP FOOTBALL QUIZ 2026</title>
@@ -23,12 +22,17 @@
         :root {
             --primary: #10b981;
             --bg-dark: #051622;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
         }
         body {
             font-family: 'Outfit', sans-serif;
             background: var(--bg-dark);
             color: white;
             margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
             overflow: hidden;
             
             /* Native App Feel */
@@ -38,11 +42,17 @@
             user-select: none;
             touch-action: manipulation;
         }
+        #root {
+            height: 100vh;
+            height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+        }
         .stadium-bg {
-            background: linear-gradient(to bottom, rgba(5, 22, 34, 0.4), rgba(5, 22, 34, 0.95)), 
+            background: linear-gradient(to bottom, rgba(5, 22, 34, 0.6), rgba(5, 22, 34, 1)), 
                         url('https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000');
             background-size: cover;
-            background-position: center bottom;
+            background-position: center top;
             background-attachment: fixed;
         }
         .grass-pattern {
@@ -51,21 +61,26 @@
         }
         @keyframes pulse-glow {
             0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+            70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
             100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
         .btn-glow {
             animation: pulse-glow 2s infinite;
         }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
+        /* Responsiveness fixes for small screens */
+        @media (max-height: 700px) {
+            .mobile-compact {
+                gap: 0.5rem !important;
+            }
+            .mobile-title {
+                font-size: 2.25rem !important;
+            }
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
+        .safe-pb {
+            padding-bottom: var(--safe-bottom);
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 10px;
+        .safe-pt {
+            padding-top: var(--safe-top);
         }
     </style>
 <script type="importmap">
@@ -82,5 +97,6 @@
 </head>
 <body class="stadium-bg">
     <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>

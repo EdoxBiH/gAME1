@@ -1,31 +1,29 @@
 
-const CACHE_NAME = 'tap-football-v2026-v2';
+const CACHE_NAME = 'tap-football-v2026-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap'
+  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap',
+  'https://esm.sh/react@^19.2.3',
+  'https://esm.sh/react-dom@^19.2.3'
 ];
 
-// Install: Keširanje osnovnih resursa
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching app shell');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
   self.skipWaiting();
 });
 
-// Activate: Čišćenje starih keševa
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(keyList.map((key) => {
         if (key !== CACHE_NAME) {
-          console.log('[SW] Removing old cache', key);
           return caches.delete(key);
         }
       }));
@@ -34,30 +32,27 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Fetch: Network First, fallback to cache
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Ako je mreža dostupna, vrati odgovor i spremi ga u keš
-        const resClone = response.clone();
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request).then((response) => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+        const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, resClone);
+          cache.put(event.request, responseToCache);
         });
         return response;
-      })
-      .catch(() => {
-        // Ako mreža ne radi, pokušaj naći u kešu
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) return cachedResponse;
-          
-          // Ako tražimo stranicu, a nema je u kešu, vrati barem index.html
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-        });
-      })
+      }).catch(() => {
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+      });
+    })
   );
 });
