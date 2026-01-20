@@ -2,16 +2,16 @@
 {
   "name": "TAP FOOTBALL QUIZ 2026",
   "short_name": "TapFootball",
-  "description": "Vrhunski fudbalski kviz sa AI generisanim pitanjima. Testiraj svoje znanje u realnom vremenu.",
-  "id": "com.tapfootball.2026",
-  "start_url": "./",
+  "description": "The ultimate football quiz 2026. Test your knowledge with AI-powered questions. Play offline, win trophies, and become a football legend!",
+  "id": "com.tapfootball.quiz2026",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#051622",
   "theme_color": "#10b981",
   "orientation": "portrait",
   "categories": ["games", "sports", "education"],
-  "lang": "sr",
+  "lang": "en-US",
   "dir": "ltr",
   "prefer_related_applications": false,
   "icons": [
@@ -40,14 +40,23 @@
       "sizes": "1080x1920",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Glavni ekran kviza"
+      "label": "Game Main Screen"
     },
     {
       "src": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1920",
       "sizes": "1920x1080",
       "type": "image/jpeg",
       "form_factor": "wide",
-      "label": "Pregled na desktopu"
+      "label": "Game Desktop View"
+    }
+  ],
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Start Game",
+      "short_name": "Play",
+      "url": "./index.html?start=true",
+      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png", "sizes": "192x192" }]
     }
   ]
 }

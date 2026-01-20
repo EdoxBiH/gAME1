@@ -1,0 +1,13 @@
+
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.tapfootball.quiz2026",
+      "sha256_cert_fingerprints": [
+        "ZA_ZAMJENU: Ovaj ključ ćete dobiti od PWABuilder-a ili Google Play Konzole"
+      ]
+    }
+  }
+]

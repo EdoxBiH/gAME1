@@ -15,6 +15,10 @@
     <meta name="theme-color" content="#051622">
     <link rel="manifest" href="./manifest.json">
     
+    <!-- Android specific -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-TileColor" content="#051622">
+    
     <title>TAP FOOTBALL QUIZ 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -32,7 +36,9 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            min-height: -webkit-fill-available;
+            /* Fix for Blogger/Iframe height issues */
+            height: 100%;
+            width: 100%;
             overflow: hidden;
             
             /* Native App Feel */
