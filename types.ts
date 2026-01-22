@@ -60,7 +60,8 @@ export interface Achievement {
   name: Record<Language, string>;
   description: Record<Language, string>;
   requirement: number;
-  type: 'total_correct' | 'streak' | 'perfect_game' | 'level_completed';
+  type: 'total_correct' | 'streak' | 'perfect_game' | 'level_completed' | 'category_mastery' | 'high_score';
+  category?: Category;
 }
 
 export interface UserStats {
@@ -70,4 +71,6 @@ export interface UserStats {
   maxStreak: number;
   levelsCompleted: number[];
   unlockedAchievements: string[];
+  categoryCorrect: Record<string, number>;
+  completedLevelCategories: Record<number, Category[]>;
 }

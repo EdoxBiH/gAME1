@@ -3,8 +3,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Category, Question, Language } from "../types";
 import { LOCAL_QUESTIONS } from "../data/localQuestions";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 /**
  * Provides a professional, category-specific fallback explanation if one is missing.
  * Supports Bosanski, English, and Deutsch.
@@ -43,7 +41,7 @@ const getEnhancedExplanation = (q: Partial<Question>, lang: Language): string =>
       ],
       [Category.ALL]: [
         "Ovaj podatak je dio opće fudbalske kulture i historije.",
-        "Tačnost odgovora se zasniva na provjerenim sportskim izvorima.",
+        "Tačnost odgovora se zasniva na provjerenih sportskim izvorima.",
         "Fudbalske činjenice govore u prilog ovom tačnom rješenju."
       ]
     },
@@ -116,7 +114,6 @@ const getEnhancedExplanation = (q: Partial<Question>, lang: Language): string =>
   const pool = explanations[lang] || explanations['English'];
   const categoryPool = pool[category] || pool[Category.ALL];
   
-  // Use a simple hash of the question text to pick a consistent template
   const text = q.text || "";
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
@@ -127,17 +124,30 @@ const getEnhancedExplanation = (q: Partial<Question>, lang: Language): string =>
   return categoryPool[index];
 };
 
-const getOfflineQuestions = (category: Category, language: Language, difficulty: number, count: number): Question[] => {
+const getOfflineQuestions = (category: Category, language: Language, difficulty: number, count: number, excludeIds: string[] = []): Question[] => {
   const langPool = LOCAL_QUESTIONS[language] || LOCAL_QUESTIONS['English'];
   
-  let filtered = langPool.filter(q => category === Category.ALL || q.category === category);
-  if (filtered.length === 0) filtered = langPool;
+  // Filter by category and exclude already seen IDs
+  let filtered = langPool.filter(q => 
+    (category === Category.ALL || q.category === category) &&
+    !excludeIds.includes(q.id)
+  );
+
+  // If we ran out of new questions in this category, reuse from the main pool excluding session history
+  if (filtered.length < count) {
+    filtered = langPool.filter(q => !excludeIds.includes(q.id));
+  }
+
+  // If even that fails (extremely long session), just use the whole pool
+  if (filtered.length === 0) {
+    filtered = langPool;
+  }
 
   const shuffled = [...filtered].sort(() => 0.5 - Math.random());
   
   return shuffled.slice(0, count).map(q => ({
     ...q,
-    id: `offline-${Date.now()}-${Math.random()}`,
+    id: q.id || `offline-${Date.now()}-${Math.random()}`,
     difficulty: difficulty,
     explanation: getEnhancedExplanation(q, language)
   }));
@@ -147,21 +157,30 @@ export const generateQuestions = async (
   category: Category,
   difficulty: number,
   language: Language,
-  count: number = 5
+  count: number = 5,
+  excludeIds: string[] = []
 ): Promise<{ questions: Question[], isOffline: boolean }> => {
   
   if (!navigator.onLine) {
     return { 
-      questions: getOfflineQuestions(category, language, difficulty, count), 
+      questions: getOfflineQuestions(category, language, difficulty, count, excludeIds), 
       isOffline: true 
     };
   }
 
-  const prompt = `Generiši ${count} fudbalskih pitanja na jeziku: ${language}. 
-  Kategorija: ${category}. 
-  Težina: ${difficulty} (od 1-lakše do 10-teže). 
-  Svako pitanje mora imati 4 opcije i tačan odgovor. 
-  Takođe obavezno dodaj polje "explanation" sa kratkim objašnjenjem zašto je taj odgovor tačan na istom jeziku (${language}).`;
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  // Use English for the structural part of the prompt to ensure JSON schema compliance
+  // but specify the content must be in the target language.
+  const targetLang = language === 'Bosanski' ? 'Bosnian' : language === 'Deutsch' ? 'German' : 'English';
+  
+  const prompt = `Generate ${count} football trivia questions in the ${targetLang} language.
+  Category: ${category}.
+  Difficulty: ${difficulty} (on a scale of 1-10, where 1 is easy and 10 is very hard).
+  Each question must have exactly 4 options and one correct answer.
+  IMPORTANT: The questions must be unique and not match these IDs: ${excludeIds.join(', ')}.
+  You MUST provide an "explanation" field for each question in ${targetLang} explaining why the answer is correct.
+  The JSON keys must be: "id", "text", "options", "correctAnswer", "explanation". Do NOT translate the keys.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -189,10 +208,13 @@ export const generateQuestions = async (
       }
     });
 
-    const text = response.text;
-    if (!text) throw new Error("Empty response");
+    const resultText = response.text;
+    if (!resultText) throw new Error("Empty response");
     
-    const parsed = JSON.parse(text);
+    // Some models might wrap JSON in markdown blocks even with mimeType set
+    const cleanJson = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(cleanJson);
+
     return {
       isOffline: false,
       questions: parsed.map((q: any) => ({
@@ -202,9 +224,9 @@ export const generateQuestions = async (
       }))
     };
   } catch (error) {
-    console.warn("Gemini API error, falling back to offline mode:", error);
+    console.warn(`Gemini API error for ${language}, falling back to offline mode:`, error);
     return { 
-      questions: getOfflineQuestions(category, language, difficulty, count), 
+      questions: getOfflineQuestions(category, language, difficulty, count, excludeIds), 
       isOffline: true 
     };
   }

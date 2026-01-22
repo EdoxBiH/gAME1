@@ -26,9 +26,18 @@
         :root {
             --primary: #10b981;
             --bg-dark: #051622;
-            --safe-top: env(safe-area-inset-top);
-            --safe-bottom: env(safe-area-inset-bottom);
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
         }
+        
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
             background: var(--bg-dark);
@@ -36,57 +45,120 @@
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            /* Fix for Blogger/Iframe height issues */
+            /* Support for mobile viewports */
+            min-height: -webkit-fill-available;
             height: 100%;
             width: 100%;
             overflow: hidden;
             
-            /* Native App Feel */
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
             touch-action: manipulation;
         }
+
         #root {
             height: 100vh;
             height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
+
         .stadium-bg {
-            background: linear-gradient(to bottom, rgba(5, 22, 34, 0.6), rgba(5, 22, 34, 1)), 
+            background: linear-gradient(to bottom, rgba(5, 22, 34, 0.7), rgba(5, 22, 34, 1)), 
                         url('https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000');
             background-size: cover;
             background-position: center top;
             background-attachment: fixed;
         }
+
         .grass-pattern {
             background-image: radial-gradient(circle at 2px 2px, rgba(16, 185, 129, 0.05) 1px, transparent 0);
             background-size: 40px 40px;
         }
+
         @keyframes pulse-glow {
             0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
             70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
             100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
+
         .btn-glow {
             animation: pulse-glow 2s infinite;
         }
-        /* Responsiveness fixes for small screens */
-        @media (max-height: 700px) {
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        /* Safe area utility classes */
+        .safe-pt {
+            padding-top: max(1rem, var(--safe-top));
+        }
+        .safe-pb {
+            padding-bottom: max(1rem, var(--safe-bottom));
+        }
+        .safe-px {
+            padding-left: var(--safe-left);
+            padding-right: var(--safe-right);
+        }
+
+        /* Height-based responsive adjustments for mobile devices */
+        
+        /* Ultra-small or landscape-style heights */
+        @media (max-height: 600px) {
+            .mobile-compact { gap: 0.15rem !important; }
+            .mobile-title { font-size: 1.5rem !important; }
+            .mobile-logo { width: 2.5rem !important; height: 2.5rem !important; margin-bottom: 0.5rem !important; }
+            .mobile-btn-height { height: 3rem !important; }
+        }
+
+        /* Medium compact heights (iPhone SE, smaller Androids) */
+        @media (max-height: 740px) {
             .mobile-compact {
                 gap: 0.5rem !important;
             }
             .mobile-title {
-                font-size: 2.25rem !important;
+                font-size: 2.2rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .mobile-logo {
+                width: 3.5rem !important;
+                height: 3.5rem !important;
+                margin-bottom: 1.5rem !important;
+            }
+            .mobile-btn-height {
+                height: 4rem !important;
             }
         }
-        .safe-pb {
-            padding-bottom: var(--safe-bottom);
+
+        /* Wide screens (Tablets/Desktops) */
+        @media (min-width: 1024px) {
+            .safe-pt { padding-top: 3rem; }
+            .safe-pb { padding-bottom: 3rem; }
         }
-        .safe-pt {
-            padding-top: var(--safe-top);
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.2s ease-in-out 0s 2;
+        }
+
+        /* Prevents layout shifts on scrollable areas in WebKit */
+        .overflow-y-auto {
+            -webkit-overflow-scrolling: touch;
         }
     </style>
 <script type="importmap">
