@@ -5,7 +5,6 @@ import { LOCAL_QUESTIONS } from "../data/localQuestions";
 
 /**
  * Provides a professional, category-specific fallback explanation if one is missing.
- * Supports Bosanski, English, and Deutsch.
  */
 const getEnhancedExplanation = (q: Partial<Question>, lang: Language): string => {
   if (q.explanation) return q.explanation;
@@ -14,100 +13,28 @@ const getEnhancedExplanation = (q: Partial<Question>, lang: Language): string =>
   
   const explanations: Record<Language, Record<string, string[]>> = {
     'Bosanski': {
-      [Category.PLAYERS]: [
-        "Ovaj podatak je potvrđen kroz zvaničnu statistiku saveza i klubova.",
-        "Igrač je prepoznat po ovom dostignuću u svjetskim fudbalskim analima.",
-        "Fudbalska historija bilježi ovaj podvig kao jedan od ključnih u karijeri igrača."
-      ],
-      [Category.CLUBS]: [
-        "Klupska historija i arhiva trofeja potvrđuju tačnost ovog odgovora.",
-        "Ovaj uspjeh je upisan u zlatne knjige kluba i prepoznat od strane UEFA/FIFA.",
-        "Navijači i historičari pamte ovaj događaj kao prekretnicu za klub."
-      ],
-      [Category.STADIUMS]: [
-        "Arhitektonski podaci i klupska evidencija potvrđuju specifičnosti ovog stadiona.",
-        "Stadion je postao legendaran upravo zbog ovih historijskih činjenica.",
-        "Zvanični kapaciteti i lokacije su provjereni prema standardima saveza."
-      ],
-      [Category.NATIONAL_TEAMS]: [
-        "Reprezentativni uspjesi su dokumentovani u FIFA svjetskom poretku.",
-        "Ovaj turnir je ostao upamćen upravo po ovom rezultatu ili rekordu.",
-        "Nacionalni ponos se često temelji na ovim historijski tačnim činjenicama."
-      ],
-      [Category.COACHES]: [
-        "Taktičke inovacije i osvojeni trofeji ovog trenera potvrđuju odgovor.",
-        "Njegova karijera je obilježena upravo ovim stilom vođenja ekipe.",
-        "Stručni komentatori se slažu u ocjeni ovog trenerskog dostignuća."
-      ],
-      [Category.ALL]: [
-        "Ovaj podatak je dio opće fudbalske kulture i historije.",
-        "Tačnost odgovora se zasniva na provjerenih sportskim izvorima.",
-        "Fudbalske činjenice govore u prilog ovom tačnom rješenju."
-      ]
+      [Category.PLAYERS]: ["Ovaj podatak je potvrđen kroz zvaničnu statistiku."],
+      [Category.CLUBS]: ["Klupska historija potvrđuje tačnost ovog odgovora."],
+      [Category.STADIUMS]: ["Stadion je postao legendaran zbog ovih činjenica."],
+      [Category.NATIONAL_TEAMS]: ["Reprezentativni uspjesi su dokumentovani u FIFA arhivi."],
+      [Category.COACHES]: ["Karijera ovog trenera je obilježena ovim dostignućem."],
+      [Category.ALL]: ["Fudbalske činjenice govore u prilog ovom tačnom rješenju."]
     },
     'English': {
-      [Category.PLAYERS]: [
-        "This record is officially documented in club and league statistics.",
-        "The player is world-renowned for this specific achievement.",
-        "Football history records this feat as a milestone in the player's career."
-      ],
-      [Category.CLUBS]: [
-        "The club's trophy cabinet and history confirm the accuracy of this answer.",
-        "This success is etched in the club's legacy and recognized globally.",
-        "Historians and fans alike remember this event as a defining moment."
-      ],
-      [Category.STADIUMS]: [
-        "Architectural data and club records verify these stadium specifics.",
-        "The stadium's legendary status is built on these historical facts.",
-        "Official capacities and locations follow the highest football standards."
-      ],
-      [Category.NATIONAL_TEAMS]: [
-        "National team triumphs are strictly documented in FIFA world rankings.",
-        "This tournament is best remembered for this specific result or record.",
-        "National pride is often built on these historically accurate milestones."
-      ],
-      [Category.COACHES]: [
-        "The coach's tactical innovations and trophies validate this response.",
-        "His management career is defined by this specific leadership style.",
-        "Expert analysts agree on the significance of this coaching achievement."
-      ],
-      [Category.ALL]: [
-        "This information is a core part of general football culture and history.",
-        "The answer's accuracy is based on verified sports databases.",
-        "Football facts strongly support this correct solution."
-      ]
+      [Category.PLAYERS]: ["This record is officially documented in league statistics."],
+      [Category.CLUBS]: ["The club's trophy cabinet confirms the accuracy of this answer."],
+      [Category.STADIUMS]: ["Official capacities follow the highest football standards."],
+      [Category.NATIONAL_TEAMS]: ["National team triumphs are documented in FIFA world rankings."],
+      [Category.COACHES]: ["The coach's tactical innovations validate this response."],
+      [Category.ALL]: ["Football facts strongly support this correct solution."]
     },
     'Deutsch': {
-      [Category.PLAYERS]: [
-        "Dieser Rekord ist offiziell in den Vereins- und Ligastatistiken dokumentiert.",
-        "Der Spieler ist weltweit für diese spezifische Leistung bekannt.",
-        "Die Fußballgeschichte verzeichnet diesen Meilenstein in der Karriere des Spielers."
-      ],
-      [Category.CLUBS]: [
-        "Die Trophäensammlung und die Geschichte des Vereins bestätigen die Richtigkeit.",
-        "Dieser Erfolg ist fest im Erbe des Vereins verankert und weltweit anerkannt.",
-        "Historiker und Fans erinnern sich an dieses Ereignis als einen Wendepunkt."
-      ],
-      [Category.STADIUMS]: [
-        "Architektonische Daten und Vereinsunterlagen bestätigen diese Details.",
-        "Der legendäre Status des Stadions basiert auf diesen historischen Fakten.",
-        "Offizielle Kapazitäten und Standorte entsprechen den höchsten Standards."
-      ],
-      [Category.NATIONAL_TEAMS]: [
-        "Nationalmannschaftserfolge sind in den FIFA-Weltranglisten dokumentiert.",
-        "Dieses Turnier ist vor allem für dieses spezifische Ergebnis bekannt.",
-        "Nationalstolz gründet sich oft auf diesen historisch belegten Fakten."
-      ],
-      [Category.COACHES]: [
-        "Taktische Innovationen und Titel des Trainers bestätigen diese Antwort.",
-        "Seine Trainerkarriere ist durch diesen spezifischen Führungsstil geprägt.",
-        "Experten sind sich über die Bedeutung dieser Trainerleistung einig."
-      ],
-      [Category.ALL]: [
-        "Diese Information ist ein wesentlicher Teil der Fußballkultur.",
-        "Die Richtigkeit der Antwort basiert auf verifizierten Sportdatenbanken.",
-        "Fußballfakten stützen diese korrekte Lösung eindeutig."
-      ]
+      [Category.PLAYERS]: ["Dieser Rekord ist offiziell in den Statistiken dokumentiert."],
+      [Category.CLUBS]: ["Die Geschichte des Vereins bestätigt die Richtigkeit."],
+      [Category.STADIUMS]: ["Offizielle Kapazitäten entsprechen den höchsten Standards."],
+      [Category.NATIONAL_TEAMS]: ["Nationalmannschaftserfolge sind dokumentiert."],
+      [Category.COACHES]: ["Trainerkarriere und Titel bestätigen diese Antwort."],
+      [Category.ALL]: ["Fußballfakten stützen diese korrekte Lösung eindeutig."]
     }
   };
 
@@ -125,20 +52,23 @@ const getEnhancedExplanation = (q: Partial<Question>, lang: Language): string =>
 };
 
 const getOfflineQuestions = (category: Category, language: Language, difficulty: number, count: number, excludeIds: string[] = []): Question[] => {
-  const langPool = LOCAL_QUESTIONS[language] || LOCAL_QUESTIONS['English'];
+  // Ensure we have a pool, default to English if specific language is missing
+  const langPool = LOCAL_QUESTIONS[language] || LOCAL_QUESTIONS['English'] || [];
   
-  // Filter by category and exclude already seen IDs
+  if (langPool.length === 0) return [];
+
+  // 1. Try to filter by category and unused IDs
   let filtered = langPool.filter(q => 
     (category === Category.ALL || q.category === category) &&
     !excludeIds.includes(q.id)
   );
 
-  // If we ran out of new questions in this category, reuse from the main pool excluding session history
-  if (filtered.length < count) {
+  // 2. If no unused category-specific questions, ignore category but keep unused
+  if (filtered.length === 0 && category !== Category.ALL) {
     filtered = langPool.filter(q => !excludeIds.includes(q.id));
   }
 
-  // If even that fails (extremely long session), just use the whole pool
+  // 3. If still nothing (all questions used), just use the whole pool
   if (filtered.length === 0) {
     filtered = langPool;
   }
@@ -148,8 +78,8 @@ const getOfflineQuestions = (category: Category, language: Language, difficulty:
   return shuffled.slice(0, count).map(q => ({
     ...q,
     id: q.id || `offline-${Date.now()}-${Math.random()}`,
-    difficulty: difficulty,
-    explanation: getEnhancedExplanation(q, language)
+    difficulty: q.difficulty || difficulty,
+    explanation: q.explanation || getEnhancedExplanation(q, language)
   }));
 };
 
@@ -161,6 +91,11 @@ export const generateQuestions = async (
   excludeIds: string[] = []
 ): Promise<{ questions: Question[], isOffline: boolean }> => {
   
+  // Basic sanity check
+  if (!LOCAL_QUESTIONS[language] && language !== 'English') {
+    console.warn(`Local pool for ${language} not found, falling back.`);
+  }
+
   if (!navigator.onLine) {
     return { 
       questions: getOfflineQuestions(category, language, difficulty, count, excludeIds), 
@@ -168,21 +103,16 @@ export const generateQuestions = async (
     };
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  // Use English for the structural part of the prompt to ensure JSON schema compliance
-  // but specify the content must be in the target language.
   const targetLang = language === 'Bosanski' ? 'Bosnian' : language === 'Deutsch' ? 'German' : 'English';
   
-  const prompt = `Generate ${count} football trivia questions in the ${targetLang} language.
+  const prompt = `Generate ${count} football trivia questions in ${targetLang}.
   Category: ${category}.
-  Difficulty: ${difficulty} (on a scale of 1-10, where 1 is easy and 10 is very hard).
-  Each question must have exactly 4 options and one correct answer.
-  IMPORTANT: The questions must be unique and not match these IDs: ${excludeIds.join(', ')}.
-  You MUST provide an "explanation" field for each question in ${targetLang} explaining why the answer is correct.
-  The JSON keys must be: "id", "text", "options", "correctAnswer", "explanation". Do NOT translate the keys.`;
+  Difficulty: ${difficulty}/10.
+  Unique IDs to avoid: ${excludeIds.slice(-20).join(', ')}.
+  JSON: [{"id": string, "text": string, "options": [4 strings], "correctAnswer": string, "explanation": string}]`;
 
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -195,10 +125,7 @@ export const generateQuestions = async (
             properties: {
               id: { type: Type.STRING },
               text: { type: Type.STRING },
-              options: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-              },
+              options: { type: Type.ARRAY, items: { type: Type.STRING } },
               correctAnswer: { type: Type.STRING },
               explanation: { type: Type.STRING }
             },
@@ -211,7 +138,6 @@ export const generateQuestions = async (
     const resultText = response.text;
     if (!resultText) throw new Error("Empty response");
     
-    // Some models might wrap JSON in markdown blocks even with mimeType set
     const cleanJson = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleanJson);
 
@@ -219,12 +145,13 @@ export const generateQuestions = async (
       isOffline: false,
       questions: parsed.map((q: any) => ({
         ...q,
+        id: q.id || `ai-${Date.now()}-${Math.random()}`,
         category: category,
         difficulty: difficulty
       }))
     };
   } catch (error) {
-    console.warn(`Gemini API error for ${language}, falling back to offline mode:`, error);
+    console.error(`Gemini fetch failed for ${language}:`, error);
     return { 
       questions: getOfflineQuestions(category, language, difficulty, count, excludeIds), 
       isOffline: true 

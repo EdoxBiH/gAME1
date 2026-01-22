@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Category, Question, GameState, LevelConfig, Language, LeaderboardEntry, Achievement, UserStats } from './types';
 import { generateQuestions } from './services/geminiService';
@@ -132,7 +132,7 @@ const App: React.FC = () => {
       correctAnswers: 0,
       mistakes: 0,
       isGameOver: false,
-      language: ['Bosanski', 'English', 'Deutsch'].includes(savedLang) ? savedLang : 'English',
+      language: (['Bosanski', 'English', 'Deutsch'].includes(savedLang) ? savedLang : 'English') as Language,
       history: [],
     };
   });
@@ -160,6 +160,7 @@ const App: React.FC = () => {
 
   const [hasInteracted, setHasInteracted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const fetchingRef = useRef(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showTrophyRoom, setShowTrophyRoom] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -213,35 +214,60 @@ const App: React.FC = () => {
   };
 
   const fetchBatch = useCallback(async (level: number, category: Category, lang: Language, progress: number, history: string[]) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     setLoading(true);
-    const config = levels.find(l => l.id === level) || levels[0];
-    const progressRatio = progress / 20;
-    const dynamicDiff = Math.min(
-      config.maxDifficulty,
-      Math.max(config.minDifficulty, Math.round(config.minDifficulty + (config.maxDifficulty - config.minDifficulty) * progressRatio))
-    );
 
-    const result = await generateQuestions(category, dynamicDiff, lang, 5, history);
-    setQuestions(prev => [...prev, ...result.questions]);
-    setLoading(false);
+    try {
+      const config = levels.find(l => l.id === level) || levels[0];
+      const progressRatio = progress / 20;
+      const dynamicDiff = Math.min(
+        config.maxDifficulty,
+        Math.max(config.minDifficulty, Math.round(config.minDifficulty + (config.maxDifficulty - config.minDifficulty) * progressRatio))
+      );
+
+      const result = await generateQuestions(category, dynamicDiff, lang, 5, history);
+      
+      if (result.questions.length > 0) {
+        setQuestions(prev => [...prev, ...result.questions]);
+      } else if (lang !== 'English') {
+        // Fallback to English if local pool for lang is exhausted or broken
+        const fallbackResult = await generateQuestions(category, dynamicDiff, 'English', 5, history);
+        setQuestions(prev => [...prev, ...fallbackResult.questions]);
+      }
+    } catch (error) {
+      console.error("fetchBatch failed:", error);
+    } finally {
+      setLoading(false);
+      fetchingRef.current = false;
+    }
   }, [levels]);
 
   useEffect(() => {
-    if (step === 'QUIZ' && questions.length - currentQuestionIndex < 3 && gameState.questionsAnswered < 20 && !gameState.isGameOver) {
+    if (step === 'QUIZ' && !loading && questions.length - currentQuestionIndex < 3 && gameState.questionsAnswered < 20 && !gameState.isGameOver) {
       const historyIds = gameState.history.map(h => h.questionId);
       const currentIds = questions.map(q => q.id);
       fetchBatch(gameState.currentLevel, gameState.selectedCategory, gameState.language, gameState.questionsAnswered, [...historyIds, ...currentIds]);
     }
-  }, [step, questions.length, currentQuestionIndex, gameState.currentLevel, gameState.selectedCategory, gameState.language, gameState.questionsAnswered, gameState.isGameOver, fetchBatch]);
+  }, [step, questions.length, currentQuestionIndex, gameState.currentLevel, gameState.selectedCategory, gameState.language, gameState.questionsAnswered, gameState.isGameOver, fetchBatch, loading]);
 
   const handleStartQuiz = (category: Category) => {
     handleInteraction();
     audioService.playSfx('playAgain', 0.6, true);
-    setGameState(prev => ({ ...prev, selectedCategory: category, score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
     setQuestions([]);
     setStreak(0);
     setCurrentQuestionIndex(0);
     setIsPaused(false);
+    setGameState(prev => ({ 
+      ...prev, 
+      selectedCategory: category, 
+      score: 0, 
+      questionsAnswered: 0, 
+      correctAnswers: 0, 
+      mistakes: 0, 
+      isGameOver: false, 
+      history: [] 
+    }));
     setStep('QUIZ');
   };
 
@@ -275,7 +301,6 @@ const App: React.FC = () => {
       const isSuccess = (gameState.questionsAnswered + 1 >= 20) && newMistakes < 5;
 
       if (isSuccess) {
-        // Track completed categories for current level
         const currentLevelCats = updatedStats.completedLevelCategories[gameState.currentLevel] || [];
         if (!currentLevelCats.includes(gameState.selectedCategory)) {
           const newLevelCats = [...currentLevelCats, gameState.selectedCategory];
@@ -284,12 +309,9 @@ const App: React.FC = () => {
             [gameState.currentLevel]: newLevelCats
           };
 
-          // Check if ALL categories (6 total) are finished
-          const totalCategories = Object.keys(Category).length;
+          const totalCategories = 6; 
           if (newLevelCats.length === totalCategories) {
             updatedStats.levelsCompleted = [...new Set([...updatedStats.levelsCompleted, gameState.currentLevel])];
-            
-            // Unlock next level visually
             setLevels(prev => prev.map(l => l.id === gameState.currentLevel + 1 ? {...l, unlocked: true} : l));
           }
         }
@@ -368,13 +390,13 @@ const App: React.FC = () => {
   const t = (key: keyof typeof TRANSLATIONS) => {
     const entry = TRANSLATIONS[key];
     if (!entry) return key;
-    return entry[gameState.language] || entry['English'] || key;
+    return (entry as any)[gameState.language] || (entry as any)['English'] || key;
   };
 
   const isWin = gameState.questionsAnswered >= 20 && gameState.mistakes < 5;
   const accuracyPercent = Math.round((gameState.correctAnswers / Math.max(1, gameState.questionsAnswered)) * 100);
 
-  const langTheme = LANGUAGE_THEMES[gameState.language];
+  const langTheme = LANGUAGE_THEMES[gameState.language] || LANGUAGE_THEMES['English'];
 
   return (
     <div className="flex-1 flex flex-col h-full grass-pattern relative overflow-hidden" onClick={handleInteraction}>
@@ -459,6 +481,8 @@ const App: React.FC = () => {
              <h2 className="text-xl md:text-4xl font-black my-6 md:my-8 uppercase tracking-tighter text-white/40">{t('selectCategory')}</h2>
              <div className="grid grid-cols-2 gap-3 md:gap-6 w-full max-w-[500px] mb-12 px-2">
                 {Object.values(Category).map((cat, index) => {
+                  if (cat === Category.ALL && index !== Object.values(Category).length - 1) return null; // Avoid dupes if any
+                  
                   const isAll = cat === Category.ALL;
                   const isDoneInCurrentLevel = (userStats.completedLevelCategories[gameState.currentLevel] || []).includes(cat);
                   const icon = CATEGORY_VISUALS[cat].icon;
@@ -478,7 +502,6 @@ const App: React.FC = () => {
                         : `bg-black/40 ${langTheme.accent} hover:border-white/40 shadow-md ${langTheme.glow}`
                       }`}
                     >
-                      {/* Animated language-themed background layer */}
                       <div className={`absolute inset-0 bg-gradient-to-br ${langTheme.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-500`} />
                       
                       <div className="relative z-10 flex flex-col items-center text-center">
@@ -501,7 +524,6 @@ const App: React.FC = () => {
                         </div>
                       </div>
                       
-                      {/* Dynamic light reflection */}
                       <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     </motion.div>
                   );
