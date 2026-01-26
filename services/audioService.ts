@@ -42,7 +42,9 @@ class AudioService {
 
   setMute(muted: boolean) {
     this.isMuted = muted;
-    if (muted) this.stopAll();
+    if (muted) {
+      this.stopAll();
+    }
   }
 
   stopAll() {
@@ -62,7 +64,6 @@ class AudioService {
 
     const audio = this.sfx[type];
     if (audio) {
-      // If playing same sound, reset it
       audio.pause();
       audio.currentTime = 0;
       audio.volume = volume;
@@ -82,10 +83,6 @@ class AudioService {
       audio.currentTime = 0;
       this.activeSounds.delete(audio);
     }
-  }
-
-  setBgMusic(playing: boolean) {
-    // Background music is currently disabled as per previous requests
   }
 }
 

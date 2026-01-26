@@ -102,8 +102,30 @@ const CATEGORY_TRANSLATIONS: Record<Category, Record<Language, string>> = {
 
 const GAME_LOGO = "https://cdn-icons-png.flaticon.com/512/53/53283.png";
 
+const StadiumAtmosphere: React.FC = () => {
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+      <div className="light-beam beam-1" />
+      <div className="light-beam beam-2" />
+      {[...Array(20)].map((_, i) => (
+        <div
+          key={i}
+          className="dust"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animation: `float ${10 + Math.random() * 15}s infinite linear`,
+            animationDelay: `${Math.random() * -20}s`
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [isMuted, setIsMuted] = useState<boolean>(() => JSON.parse(localStorage.getItem('quiz_muted') || 'false'));
+  
   const [levels, setLevels] = useState<LevelConfig[]>(() => {
     const saved = localStorage.getItem('quiz_levels');
     return saved ? JSON.parse(saved) : INITIAL_LEVELS;
@@ -231,7 +253,6 @@ const App: React.FC = () => {
       if (result.questions.length > 0) {
         setQuestions(prev => [...prev, ...result.questions]);
       } else if (lang !== 'English') {
-        // Fallback to English if local pool for lang is exhausted or broken
         const fallbackResult = await generateQuestions(category, dynamicDiff, 'English', 5, history);
         setQuestions(prev => [...prev, ...fallbackResult.questions]);
       }
@@ -400,6 +421,9 @@ const App: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full grass-pattern relative overflow-hidden" onClick={handleInteraction}>
+      
+      <StadiumAtmosphere />
+
       <AnimatePresence>
         {unlockedToast && (
           <motion.div initial={{ y: -100, opacity: 0 }} animate={{ y: 20, opacity: 1 }} exit={{ y: -100, opacity: 0 }} className="fixed top-0 left-1/2 -translate-x-1/2 z-[200] w-[90%] max-w-sm pointer-events-none">
@@ -414,176 +438,180 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
-        {step === 'HOME' ? (
-          <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 1.1 }} className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 safe-pt safe-pb">
-            <div className="mb-4 md:mb-10 flex flex-col items-center w-full max-w-md">
-              <div className="flex gap-2 bg-white/5 backdrop-blur-xl p-1 rounded-full border border-white/10 mb-6 scale-90 md:scale-100">
-                {(Object.keys(LANGUAGE_FLAGS) as Language[]).map(lang => (
-                  <button key={lang} onClick={(e) => { e.stopPropagation(); audioService.playSfx('click', 0.3); handleInteraction(); setGameState(prev => ({ ...prev, language: lang })); }} className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full text-lg transition-all ${gameState.language === lang ? 'bg-white/10 scale-110 border-white/20' : 'opacity-40 grayscale'}`}>{LANGUAGE_FLAGS[lang]}</button>
-                ))}
+      <div className="relative z-10 flex-1 flex flex-col h-full">
+        <AnimatePresence mode="wait">
+          {step === 'HOME' ? (
+            <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 1.1 }} className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 safe-pt safe-pb">
+              <div className="mb-4 md:mb-10 flex flex-col items-center w-full max-w-md">
+                <div className="flex gap-2 bg-white/5 backdrop-blur-xl p-1 rounded-full border border-white/10 mb-6 scale-90 md:scale-100">
+                  {(Object.keys(LANGUAGE_FLAGS) as Language[]).map(lang => (
+                    <button key={lang} onClick={(e) => { e.stopPropagation(); audioService.playSfx('click', 0.3); handleInteraction(); setGameState(prev => ({ ...prev, language: lang })); }} className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full text-lg transition-all ${gameState.language === lang ? 'bg-white/10 scale-110 border-white/20' : 'opacity-40 grayscale'}`}>{LANGUAGE_FLAGS[lang]}</button>
+                  ))}
+                </div>
+                <motion.img initial={{ scale: 0 }} animate={{ scale: 1 }} src={GAME_LOGO} className="mobile-logo w-14 h-14 md:w-20 md:h-20 mx-auto mb-4 md:mb-6 drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]" />
+                <motion.h1 className="mobile-title text-4xl md:text-7xl font-black tracking-tighter uppercase leading-[0.9] text-center mb-1 drop-shadow-2xl">TAP FOOTBALL<br/><span className="text-emerald-500">2026</span></motion.h1>
+                <motion.p className="text-[9px] md:text-xs font-bold text-white/30 tracking-[0.2em] uppercase text-center">{t('subTitle')}</motion.p>
               </div>
-              <motion.img initial={{ scale: 0 }} animate={{ scale: 1 }} src={GAME_LOGO} className="mobile-logo w-14 h-14 md:w-20 md:h-20 mx-auto mb-4 md:mb-6 drop-shadow-[0_0_30px_rgba(16,185,129,0.5)]" />
-              <motion.h1 className="mobile-title text-4xl md:text-7xl font-black tracking-tighter uppercase leading-[0.9] text-center mb-1 drop-shadow-2xl">TAP FOOTBALL<br/><span className="text-emerald-500">2026</span></motion.h1>
-              <motion.p className="text-[9px] md:text-xs font-bold text-white/30 tracking-[0.2em] uppercase text-center">{t('subTitle')}</motion.p>
-            </div>
 
-            <div className="w-full max-w-[300px] md:max-w-[340px] space-y-2 md:space-y-4 mobile-compact">
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => { handleInteraction(); audioService.playSfx('playAgain', 0.5, true); setStep('LEVEL_SELECT'); }} className="mobile-btn-height w-full h-14 md:h-20 bg-emerald-500 text-white font-black rounded-2xl md:rounded-3xl shadow-[0_15px_40px_rgba(16,185,129,0.3)] uppercase text-sm md:text-base tracking-[0.2em] btn-glow">{t('startGame')}</motion.button>
-              <div className="grid grid-cols-2 gap-2 md:gap-3">
-                <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowLeaderboard(true); }} className="h-12 md:h-16 bg-white/5 border border-white/10 text-white/60 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest backdrop-blur-md">🏆 RANK</button>
-                <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowTrophyRoom(true); }} className="h-12 md:h-16 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest backdrop-blur-md">🏅 ROOM</button>
+              <div className="w-full max-w-[300px] md:max-w-[340px] space-y-2 md:space-y-4 mobile-compact">
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => { handleInteraction(); audioService.playSfx('playAgain', 0.5, true); setStep('LEVEL_SELECT'); }} className="mobile-btn-height w-full h-14 md:h-20 bg-emerald-500 text-white font-black rounded-2xl md:rounded-3xl shadow-[0_15px_40px_rgba(16,185,129,0.3)] uppercase text-sm md:text-base tracking-[0.2em] btn-glow">{t('startGame')}</motion.button>
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
+                  <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowLeaderboard(true); }} className="h-12 md:h-16 bg-white/5 border border-white/10 text-white/60 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest backdrop-blur-md">🏆 RANK</button>
+                  <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowTrophyRoom(true); }} className="h-12 md:h-16 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest backdrop-blur-md">🏅 ROOM</button>
+                </div>
               </div>
-            </div>
 
-            <button onClick={toggleMute} className="mt-6 md:mt-8 text-sm p-3 bg-black/40 rounded-full border border-white/10 backdrop-blur-md w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">{isMuted ? '🔇' : '🔊'}</button>
-          </motion.div>
-        ) : step === 'LEVEL_SELECT' ? (
-          <motion.div key="level-select" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
-            <h2 className="text-xl md:text-4xl font-black uppercase tracking-tighter my-6 md:my-8">{t('pickLevel')}</h2>
-            <div className="w-full max-w-sm space-y-2 md:space-y-4 mb-10">
-              {levels.map(level => {
-                const completedCatsCount = (userStats.completedLevelCategories[level.id] || []).length;
-                return (
-                  <motion.div 
-                    key={level.id} 
-                    onClick={() => { if(level.unlocked) { audioService.playSfx('click', 0.4); setGameState(prev => ({...prev, currentLevel: level.id})); setStep(gameState.nickname ? 'CATEGORY_SELECT' : 'NICKNAME_INPUT'); } }} 
-                    className={`p-4 md:p-8 rounded-[1.2rem] md:rounded-[2.5rem] border transition-all cursor-pointer flex justify-between items-center relative overflow-hidden ${level.unlocked ? 'bg-black/40 border-emerald-500/30 active:scale-95' : 'bg-black/20 border-white/5 opacity-40 grayscale'}`}
-                  >
-                    <div>
-                      <span className="text-white/30 text-[8px] md:text-[10px] font-black uppercase block mb-0.5">LVL {level.id}</span>
-                      <h3 className="text-lg md:text-3xl font-black uppercase">{level.name[gameState.language] || level.name['English']}</h3>
-                      <p className="text-[9px] md:text-xs text-white/50 font-bold uppercase mt-1">
-                        {t('categoriesDone').replace('{done}', completedCatsCount.toString())}
-                      </p>
-                    </div>
-                    {level.unlocked ? <span className="text-emerald-500 font-black text-xs md:text-base">GO →</span> : <span className="text-sm md:text-lg">🔒</span>}
-                    
-                    <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-full">
-                      <motion.div className="h-full bg-emerald-500/40" initial={{ width: 0 }} animate={{ width: `${(completedCatsCount / 6) * 100}%` }} />
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-            <button onClick={() => { audioService.playSfx('exit', 0.5, true); setStep('HOME'); }} className="mt-auto mb-4 text-[10px] md:text-xs font-black text-white/30 uppercase tracking-[0.4em] py-3 px-8 active:text-white">{t('back')}</button>
-          </motion.div>
-        ) : step === 'NICKNAME_INPUT' ? (
-          <motion.div key="nick" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-4 safe-pt safe-pb">
-            <div className="bg-black/60 backdrop-blur-2xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border border-white/10 w-full max-w-[340px] text-center shadow-2xl">
-              <h2 className="text-xl md:text-3xl font-black mb-6 md:mb-8 uppercase tracking-tighter">{t('enterNickname')}</h2>
-              <input type="text" value={gameState.nickname} placeholder="Messi10..." onChange={(e) => setGameState(p => ({...p, nickname: e.target.value.substring(0, 15)}))} className="w-full h-14 md:h-20 bg-white/5 border border-white/10 rounded-xl md:rounded-3xl px-6 text-white text-lg md:text-xl font-bold mb-6 md:mb-8 focus:outline-none focus:border-emerald-500 text-center placeholder:text-white/10" />
-              <button onClick={() => { audioService.playSfx('click', 0.4); setStep('CATEGORY_SELECT'); }} disabled={!gameState.nickname.trim()} className="w-full h-14 md:h-20 bg-emerald-500 font-black rounded-xl md:rounded-3xl uppercase text-xs md:text-sm tracking-widest disabled:opacity-20 active:scale-95 transition-all">{t('start')}</button>
-            </div>
-          </motion.div>
-        ) : step === 'CATEGORY_SELECT' ? (
-          <motion.div key="cat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
-             <h2 className="text-xl md:text-4xl font-black my-6 md:my-8 uppercase tracking-tighter text-white/40">{t('selectCategory')}</h2>
-             <div className="grid grid-cols-2 gap-3 md:gap-6 w-full max-w-[500px] mb-12 px-2">
-                {Object.values(Category).map((cat, index) => {
-                  if (cat === Category.ALL && index !== Object.values(Category).length - 1) return null; // Avoid dupes if any
-                  
-                  const isAll = cat === Category.ALL;
-                  const isDoneInCurrentLevel = (userStats.completedLevelCategories[gameState.currentLevel] || []).includes(cat);
-                  const icon = CATEGORY_VISUALS[cat].icon;
-                  
+              <div className="mt-6 md:mt-8">
+                <button onClick={toggleMute} className="text-sm p-3 bg-black/40 rounded-full border border-white/10 backdrop-blur-md w-10 h-10 md:w-12 md:h-12 flex items-center justify-center transition-all active:scale-90">{isMuted ? '🔇' : '🔊'}</button>
+              </div>
+            </motion.div>
+          ) : step === 'LEVEL_SELECT' ? (
+            <motion.div key="level-select" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
+              <h2 className="text-xl md:text-4xl font-black uppercase tracking-tighter my-6 md:my-8">{t('pickLevel')}</h2>
+              <div className="w-full max-w-sm space-y-2 md:space-y-4 mb-10">
+                {levels.map(level => {
+                  const completedCatsCount = (userStats.completedLevelCategories[level.id] || []).length;
                   return (
-                    <motion.div
-                      key={cat}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.05, type: 'spring', damping: 20 }}
-                      whileHover={{ scale: 1.05, translateY: -5 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleStartQuiz(cat)}
-                      className={`group relative overflow-hidden cursor-pointer rounded-2xl md:rounded-[2.5rem] border-2 shadow-xl backdrop-blur-3xl p-4 md:p-8 transition-shadow ${
-                        isAll 
-                        ? `col-span-2 bg-gradient-to-br ${langTheme.gradient} border-white/20 shadow-lg ${langTheme.glow}` 
-                        : `bg-black/40 ${langTheme.accent} hover:border-white/40 shadow-md ${langTheme.glow}`
-                      }`}
+                    <motion.div 
+                      key={level.id} 
+                      onClick={() => { if(level.unlocked) { audioService.playSfx('click', 0.4); setGameState(prev => ({...prev, currentLevel: level.id})); setStep(gameState.nickname ? 'CATEGORY_SELECT' : 'NICKNAME_INPUT'); } }} 
+                      className={`p-4 md:p-8 rounded-[1.2rem] md:rounded-[2.5rem] border transition-all cursor-pointer flex justify-between items-center relative overflow-hidden ${level.unlocked ? 'bg-black/40 border-emerald-500/30 active:scale-95' : 'bg-black/20 border-white/5 opacity-40 grayscale'}`}
                     >
-                      <div className={`absolute inset-0 bg-gradient-to-br ${langTheme.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-500`} />
-                      
-                      <div className="relative z-10 flex flex-col items-center text-center">
-                        <span className="text-4xl sm:text-5xl md:text-7xl mb-4 transform transition-transform duration-500 group-hover:rotate-12 group-hover:scale-125 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
-                          {icon}
-                        </span>
-                        <div className="flex flex-col items-center gap-1">
-                          <span className={`text-[10px] sm:text-xs md:text-sm font-black tracking-[0.2em] uppercase leading-none ${isAll ? 'text-white drop-shadow-md' : 'text-white/70 group-hover:text-white transition-colors'}`}>
-                            {CATEGORY_TRANSLATIONS[cat][gameState.language] || CATEGORY_TRANSLATIONS[cat]['English']}
-                          </span>
-                          {isDoneInCurrentLevel && (
-                            <motion.span 
-                              initial={{ opacity: 0, scale: 0 }} 
-                              animate={{ opacity: 1, scale: 1 }} 
-                              className="text-emerald-400 text-[10px] md:text-sm font-bold flex items-center gap-1 mt-1"
-                            >
-                              <span className="bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/40">COMPLETED</span>
-                            </motion.span>
-                          )}
-                        </div>
+                      <div>
+                        <span className="text-white/30 text-[8px] md:text-[10px] font-black uppercase block mb-0.5">LVL {level.id}</span>
+                        <h3 className="text-lg md:text-3xl font-black uppercase">{level.name[gameState.language] || level.name['English']}</h3>
+                        <p className="text-[9px] md:text-xs text-white/50 font-bold uppercase mt-1">
+                          {t('categoriesDone').replace('{done}', completedCatsCount.toString())}
+                        </p>
                       </div>
+                      {level.unlocked ? <span className="text-emerald-500 font-black text-xs md:text-base">GO →</span> : <span className="text-sm md:text-lg">🔒</span>}
                       
-                      <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                      <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-full">
+                        <motion.div className="h-full bg-emerald-500/40" initial={{ width: 0 }} animate={{ width: `${(completedCatsCount / 6) * 100}%` }} />
+                      </div>
                     </motion.div>
                   );
                 })}
-             </div>
-             <button onClick={() => { audioService.playSfx('exit', 0.5, true); setStep('LEVEL_SELECT'); }} className="mt-auto mb-4 text-[10px] md:text-xs font-black text-white/30 uppercase tracking-[0.4em] py-3 px-8 hover:text-white transition-colors">{t('back')}</button>
-          </motion.div>
-        ) : (
-          <motion.div key="quiz" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col w-full max-w-xl mx-auto safe-pt safe-pb h-full overflow-hidden">
-            {gameState.isGameOver ? (
-              <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-4">
-                <div className={`bg-black/90 backdrop-blur-3xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border ${isWin ? 'border-emerald-500/40 shadow-[0_0_80px_rgba(16,185,129,0.15)]' : 'border-rose-500/40 shadow-[0_0_80px_rgba(244,63,94,0.15)]'} text-center w-full max-w-[360px] shadow-2xl relative overflow-hidden`}>
-                  <motion.img initial={{ scale: 0 }} animate={{ scale: 1 }} src={GAME_LOGO} className="w-10 h-10 md:w-16 mx-auto mb-4 md:mb-6" />
-                  <h1 className={`text-2xl md:text-5xl font-black mb-4 md:mb-6 uppercase tracking-tighter leading-none ${isWin ? 'text-emerald-400' : 'text-rose-500'}`}>{isWin ? t('success') : t('gameOver')}</h1>
-                  <div className="grid grid-cols-2 gap-2 md:gap-3 mb-6 md:mb-10">
-                    <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('totalScoreLabel')}</span><p className="text-xl md:text-2xl font-black text-white">{gameState.score}</p></div>
-                    <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('accuracyLabel')}</span><p className={`text-xl md:text-2xl font-black ${accuracyPercent > 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{accuracyPercent}%</p></div>
-                  </div>
-                  <div className="space-y-2 md:space-y-3">
-                    <button onClick={handleExitGame} className="w-full h-12 md:h-16 bg-emerald-500 font-black rounded-xl md:rounded-2xl uppercase text-[10px] md:text-xs tracking-widest active:scale-95 transition-all">{t('playAgain')}</button>
-                    <button onClick={handleShare} className="w-full h-10 md:h-14 bg-white/10 border border-white/10 text-white font-black rounded-lg md:rounded-xl uppercase text-[9px] md:text-[10px] tracking-widest active:bg-white/20 transition-all flex items-center justify-center gap-2">📤 {t('shareBtn')}</button>
-                    <button onClick={() => { audioService.playSfx('playAgain', 0.6, true); handleStartQuiz(gameState.selectedCategory); }} className="w-full h-10 text-white/40 font-black uppercase text-[9px] md:text-[10px] tracking-widest hover:text-white transition-colors">{t('retry')}</button>
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <div className="flex-1 flex flex-col p-3 md:p-4 h-full overflow-hidden">
-                <header className="flex justify-between items-center mb-2 md:mb-4 bg-black/40 p-2 md:p-4 rounded-xl md:rounded-[2.5rem] border border-white/10 backdrop-blur-xl shrink-0">
-                   <button onClick={() => { audioService.playSfx('click', 0.3); setIsPaused(true); }} className="w-8 h-8 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-[10px] md:text-sm active:scale-90">⏸</button>
-                   <div className="text-center">
-                     <p className="text-white/30 text-[7px] md:text-[8px] font-black uppercase mb-0.5">LVL {gameState.currentLevel} • {gameState.score}</p>
-                     <div className="flex gap-0.5">{[...Array(5)].map((_, i) => (<span key={i} className={`text-[10px] md:text-xs ${i >= (5 - gameState.mistakes) ? 'opacity-20 grayscale' : 'drop-shadow-glow'}`}>❤️</span>))}</div>
-                   </div>
-                   <div className="text-right">
-                     <p className="text-white/30 text-[7px] md:text-[8px] font-black uppercase mb-0.5">Q {gameState.questionsAnswered + 1}/20</p>
-                     <div className={`inline-block px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px] font-black ${streak >= 5 ? 'bg-orange-500 text-white animate-pulse' : 'bg-white/10 text-white/30'}`}>x{streak}</div>
-                   </div>
-                </header>
-
-                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mb-4 md:mb-6 shrink-0"><motion.div className="h-full bg-emerald-500" initial={{ width: 0 }} animate={{ width: `${(gameState.questionsAnswered / 20) * 100}%` }} transition={{ duration: 0.5 }} /></div>
-
-                <div className="flex-1 flex flex-col justify-start md:justify-center overflow-y-auto custom-scrollbar">
-                  <AnimatePresence mode="wait">
-                    {loading && questions.length <= currentQuestionIndex ? (
-                      <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center space-y-4 md:y-6 py-20">
-                        <div className="relative"><div className="w-12 h-12 md:w-20 md:h-20 border-3 md:border-4 border-emerald-500/10 rounded-full" /><div className="absolute top-0 w-12 h-12 md:w-20 md:h-20 border-3 md:border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>
-                        <p className="text-emerald-500 font-black text-[9px] md:text-xs uppercase tracking-[0.4em] animate-pulse">{t('generating')}</p>
-                      </motion.div>
-                    ) : questions[currentQuestionIndex] ? (
-                      <div className="w-full pb-4">
-                        <QuizCard key={questions[currentQuestionIndex].id} question={questions[currentQuestionIndex]} onAnswer={handleAnswer} disabled={isPaused} isMuted={isMuted} language={gameState.language} isPaused={isPaused} />
-                      </div>
-                    ) : null}
-                  </AnimatePresence>
-                </div>
               </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <button onClick={() => { audioService.playSfx('exit', 0.5, true); setStep('HOME'); }} className="mt-auto mb-4 text-[10px] md:text-xs font-black text-white/30 uppercase tracking-[0.4em] py-3 px-8 active:text-white">{t('back')}</button>
+            </motion.div>
+          ) : step === 'NICKNAME_INPUT' ? (
+            <motion.div key="nick" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-4 safe-pt safe-pb">
+              <div className="bg-black/60 backdrop-blur-2xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border border-white/10 w-full max-w-[340px] text-center shadow-2xl">
+                <h2 className="text-xl md:text-3xl font-black mb-6 md:mb-8 uppercase tracking-tighter">{t('enterNickname')}</h2>
+                <input type="text" value={gameState.nickname} placeholder="Messi10..." onChange={(e) => setGameState(p => ({...p, nickname: e.target.value.substring(0, 15)}))} className="w-full h-14 md:h-20 bg-white/5 border border-white/10 rounded-xl md:rounded-3xl px-6 text-white text-lg md:text-xl font-bold mb-6 md:mb-8 focus:outline-none focus:border-emerald-500 text-center placeholder:text-white/10" />
+                <button onClick={() => { audioService.playSfx('click', 0.4); setStep('CATEGORY_SELECT'); }} disabled={!gameState.nickname.trim()} className="w-full h-14 md:h-20 bg-emerald-500 font-black rounded-xl md:rounded-3xl uppercase text-xs md:text-sm tracking-widest disabled:opacity-20 active:scale-95 transition-all">{t('start')}</button>
+              </div>
+            </motion.div>
+          ) : step === 'CATEGORY_SELECT' ? (
+            <motion.div key="cat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
+               <h2 className="text-xl md:text-4xl font-black my-6 md:my-8 uppercase tracking-tighter text-white/40">{t('selectCategory')}</h2>
+               <div className="grid grid-cols-2 gap-3 md:gap-6 w-full max-w-[500px] mb-12 px-2">
+                  {Object.values(Category).map((cat, index) => {
+                    if (cat === Category.ALL && index !== Object.values(Category).length - 1) return null;
+                    
+                    const isAll = cat === Category.ALL;
+                    const isDoneInCurrentLevel = (userStats.completedLevelCategories[gameState.currentLevel] || []).includes(cat);
+                    const icon = CATEGORY_VISUALS[cat].icon;
+                    
+                    return (
+                      <motion.div
+                        key={cat}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.05, type: 'spring', damping: 20 }}
+                        whileHover={{ scale: 1.05, translateY: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleStartQuiz(cat)}
+                        className={`group relative overflow-hidden cursor-pointer rounded-2xl md:rounded-[2.5rem] border-2 shadow-xl backdrop-blur-3xl p-4 md:p-8 transition-shadow ${
+                          isAll 
+                          ? `col-span-2 bg-gradient-to-br ${langTheme.gradient} border-white/20 shadow-lg ${langTheme.glow}` 
+                          : `bg-black/40 ${langTheme.accent} hover:border-white/40 shadow-md ${langTheme.glow}`
+                        }`}
+                      >
+                        <div className={`absolute inset-0 bg-gradient-to-br ${langTheme.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-500`} />
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                          <span className="text-4xl sm:text-5xl md:text-7xl mb-4 transform transition-transform duration-500 group-hover:rotate-12 group-hover:scale-125 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+                            {icon}
+                          </span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`text-[10px] sm:text-xs md:text-sm font-black tracking-[0.2em] uppercase leading-none ${isAll ? 'text-white drop-shadow-md' : 'text-white/70 group-hover:text-white transition-colors'}`}>
+                              {CATEGORY_TRANSLATIONS[cat][gameState.language] || CATEGORY_TRANSLATIONS[cat]['English']}
+                            </span>
+                            {isDoneInCurrentLevel && (
+                              <motion.span 
+                                initial={{ opacity: 0, scale: 0 }} 
+                                animate={{ opacity: 1, scale: 1 }} 
+                                className="text-emerald-400 text-[10px] md:text-sm font-bold flex items-center gap-1 mt-1"
+                              >
+                                <span className="bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/40">COMPLETED</span>
+                              </motion.span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                      </motion.div>
+                    );
+                  })}
+               </div>
+               <button onClick={() => { audioService.playSfx('exit', 0.5, true); setStep('LEVEL_SELECT'); }} className="mt-auto mb-4 text-[10px] md:text-xs font-black text-white/30 uppercase tracking-[0.4em] py-3 px-8 hover:text-white transition-colors">{t('back')}</button>
+            </motion.div>
+          ) : (
+            <motion.div key="quiz" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col w-full max-w-xl mx-auto safe-pt safe-pb h-full overflow-hidden">
+              {gameState.isGameOver ? (
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-4">
+                  <div className={`bg-black/90 backdrop-blur-3xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border ${isWin ? 'border-emerald-500/40 shadow-[0_0_80px_rgba(16,185,129,0.15)]' : 'border-rose-500/40 shadow-[0_0_80px_rgba(244,63,94,0.15)]'} text-center w-full max-w-[360px] shadow-2xl relative overflow-hidden`}>
+                    <motion.img initial={{ scale: 0 }} animate={{ scale: 1 }} src={GAME_LOGO} className="w-10 h-10 md:w-16 mx-auto mb-4 md:mb-6" />
+                    <h1 className={`text-2xl md:text-5xl font-black mb-4 md:mb-6 uppercase tracking-tighter leading-none ${isWin ? 'text-emerald-400' : 'text-rose-500'}`}>{isWin ? t('success') : t('gameOver')}</h1>
+                    <div className="grid grid-cols-2 gap-2 md:gap-3 mb-6 md:mb-10">
+                      <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('totalScoreLabel')}</span><p className="text-xl md:text-2xl font-black text-white">{gameState.score}</p></div>
+                      <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('accuracyLabel')}</span><p className={`text-xl md:text-2xl font-black ${accuracyPercent > 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{accuracyPercent}%</p></div>
+                    </div>
+                    <div className="space-y-2 md:space-y-3">
+                      <button onClick={handleExitGame} className="w-full h-12 md:h-16 bg-emerald-500 font-black rounded-xl md:rounded-2xl uppercase text-[10px] md:text-xs tracking-widest active:scale-95 transition-all">{t('playAgain')}</button>
+                      <button onClick={handleShare} className="w-full h-10 md:h-14 bg-white/10 border border-white/10 text-white font-black rounded-lg md:rounded-xl uppercase text-[9px] md:text-[10px] tracking-widest active:bg-white/20 transition-all flex items-center justify-center gap-2">📤 {t('shareBtn')}</button>
+                      <button onClick={() => { audioService.playSfx('playAgain', 0.6, true); handleStartQuiz(gameState.selectedCategory); }} className="w-full h-10 text-white/40 font-black uppercase text-[9px] md:text-[10px] tracking-widest hover:text-white transition-colors">{t('retry')}</button>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <div className="flex-1 flex flex-col p-3 md:p-4 h-full overflow-hidden">
+                  <header className="flex justify-between items-center mb-2 md:mb-4 bg-black/40 p-2 md:p-4 rounded-xl md:rounded-[2.5rem] border border-white/10 backdrop-blur-xl shrink-0">
+                     <div className="flex gap-2">
+                       <button onClick={() => { audioService.playSfx('click', 0.3); setIsPaused(true); }} className="w-8 h-8 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-[10px] md:text-sm active:scale-90">⏸</button>
+                     </div>
+                     <div className="text-center">
+                       <p className="text-white/30 text-[7px] md:text-[8px] font-black uppercase mb-0.5">LVL {gameState.currentLevel} • {gameState.score}</p>
+                       <div className="flex gap-0.5">{[...Array(5)].map((_, i) => (<span key={i} className={`text-[10px] md:text-xs ${i >= (5 - gameState.mistakes) ? 'opacity-20 grayscale' : 'drop-shadow-glow'}`}>❤️</span>))}</div>
+                     </div>
+                     <div className="text-right">
+                       <p className="text-white/30 text-[7px] md:text-[8px] font-black uppercase mb-0.5">Q {gameState.questionsAnswered + 1}/20</p>
+                       <div className={`inline-block px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px] font-black ${streak >= 5 ? 'bg-orange-500 text-white animate-pulse' : 'bg-white/10 text-white/30'}`}>x{streak}</div>
+                     </div>
+                  </header>
+
+                  <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mb-4 md:mb-6 shrink-0"><motion.div className="h-full bg-emerald-500" initial={{ width: 0 }} animate={{ width: `${(gameState.questionsAnswered / 20) * 100}%` }} transition={{ duration: 0.5 }} /></div>
+
+                  <div className="flex-1 flex flex-col justify-start md:justify-center overflow-y-auto custom-scrollbar">
+                    <AnimatePresence mode="wait">
+                      {loading && questions.length <= currentQuestionIndex ? (
+                        <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center space-y-4 md:y-6 py-20">
+                          <div className="relative"><div className="w-12 h-12 md:w-20 md:h-20 border-3 md:border-4 border-emerald-500/10 rounded-full" /><div className="absolute top-0 w-12 h-12 md:w-20 md:h-20 border-3 md:border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>
+                          <p className="text-emerald-500 font-black text-[9px] md:text-xs uppercase tracking-[0.4em] animate-pulse">{t('generating')}</p>
+                        </motion.div>
+                      ) : questions[currentQuestionIndex] ? (
+                        <div className="w-full pb-4">
+                          <QuizCard key={questions[currentQuestionIndex].id} question={questions[currentQuestionIndex]} onAnswer={handleAnswer} disabled={isPaused} isMuted={isMuted} language={gameState.language} isPaused={isPaused} />
+                        </div>
+                      ) : null}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <AnimatePresence>
         {isPaused && (
@@ -624,7 +652,6 @@ const App: React.FC = () => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 safe-pt safe-pb" onClick={() => { audioService.playSfx('exit', 0.5, true); setShowTrophyRoom(false); }}>
             <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-black/60 border border-yellow-500/20 w-full max-w-[380px] rounded-[2rem] p-5 md:p-8 max-h-[85vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="text-center mb-6 shrink-0"><span className="text-3xl block mb-1">🏆</span><h3 className="text-white font-black text-lg uppercase tracking-tighter">{t('trophyRoom')}</h3></div>
-              
               <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar mb-6">
                 <div className="grid grid-cols-2 gap-2">
                   {ACHIEVEMENTS.map((ach) => {
@@ -654,7 +681,6 @@ const App: React.FC = () => {
                   })}
                 </div>
               </div>
-
               <div className="space-y-3 shrink-0">
                 <button onClick={resetAllProgress} className="w-full h-10 bg-rose-500/10 border border-rose-500/20 text-rose-500 font-black rounded-lg uppercase text-[8px] tracking-widest active:scale-95 transition-all">{t('resetData')}</button>
                 <button onClick={() => { audioService.playSfx('exit', 0.5, true); setShowTrophyRoom(false); }} className="w-full h-12 bg-white text-black font-black rounded-xl uppercase text-[10px] tracking-widest active:scale-95 transition-all">{t('close')}</button>
@@ -663,7 +689,7 @@ const App: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <footer className="py-4 text-center mt-auto safe-pb shrink-0">
+      <footer className="relative z-10 py-4 text-center mt-auto safe-pb shrink-0">
         <p className="text-[7px] font-black text-white/10 uppercase tracking-[0.4em] mb-0.5">TAP FOOTBALL QUIZ 2026</p>
         <p className="text-[6px] font-medium text-white/5 uppercase tracking-widest">© 2026 tapfootball@gmail.com</p>
       </footer>

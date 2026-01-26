@@ -13,7 +13,7 @@ const ASSETS_TO_CACHE = [
   'https://esm.sh/react@^19.2.3',
   'https://esm.sh/react-dom@^19.2.3',
   'https://esm.sh/framer-motion@^11.11.11',
-  'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
+  'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3',
   'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3',
   'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
   'https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3',

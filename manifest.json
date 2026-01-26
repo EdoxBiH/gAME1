@@ -7,11 +7,12 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "minimal-ui"],
   "background_color": "#051622",
   "theme_color": "#10b981",
   "orientation": "portrait",
   "categories": ["games", "sports", "education"],
-  "lang": "en-US",
+  "lang": "bs-BA",
   "dir": "ltr",
   "prefer_related_applications": false,
   "icons": [
@@ -48,15 +49,6 @@
       "type": "image/jpeg",
       "form_factor": "wide",
       "label": "Game Desktop View"
-    }
-  ],
-  "related_applications": [],
-  "shortcuts": [
-    {
-      "name": "Start Game",
-      "short_name": "Play",
-      "url": "./index.html?start=true",
-      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png", "sizes": "192x192" }]
     }
   ]
 }
