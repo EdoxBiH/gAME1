@@ -54,6 +54,7 @@ const TRANSLATIONS = {
   playAgain: { Bosanski: "POČETNA", English: "HOME", Deutsch: "START" },
   retry: { Bosanski: "POKUŠAJ PONOVO", English: "TRY AGAIN", Deutsch: "WIEDERHOLEN" },
   resume: { Bosanski: "NASTAVI", English: "RESUME", Deutsch: "WEITER" },
+  scorePoints: { Bosanski: "{n} BODOVA", English: "{n} POINTS", Deutsch: "{n} PUNKTE" },
   start: { Bosanski: "KRENI", English: "START", Deutsch: "START" },
   startGame: { Bosanski: "ZAPOČNI IGRU", English: "START GAME", Deutsch: "JETZT SPIELEN" },
   generating: { Bosanski: "Sastavljam pitanja...", English: "Scouting questions...", Deutsch: "Fragen werden erstellt..." },
@@ -124,7 +125,7 @@ const CATEGORY_TRANSLATIONS: Record<Category, Record<Language, string>> = {
   [Category.ALL]: { Bosanski: "SVE", English: "ALL", Deutsch: "ALLE" }
 };
 
-const GAME_LOGO = "https://cdn-icons-png.flaticon.com/512/53/53283.png";
+const GAME_LOGO = "https://i.imgur.com/EgHOWpF.png";
 
 const StadiumAtmosphere: React.FC = () => {
   return (
