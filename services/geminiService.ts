@@ -91,11 +91,6 @@ export const generateQuestions = async (
   excludeIds: string[] = []
 ): Promise<{ questions: Question[], isOffline: boolean }> => {
   
-  // Basic sanity check
-  if (!LOCAL_QUESTIONS[language] && language !== 'English') {
-    console.warn(`Local pool for ${language} not found, falling back.`);
-  }
-
   if (!navigator.onLine) {
     return { 
       questions: getOfflineQuestions(category, language, difficulty, count, excludeIds), 
@@ -105,11 +100,12 @@ export const generateQuestions = async (
 
   const targetLang = language === 'Bosanski' ? 'Bosnian' : language === 'Deutsch' ? 'German' : 'English';
   
-  const prompt = `Generate ${count} football trivia questions in ${targetLang}.
+  const prompt = `Generate ${count} football trivia questions. 
+  CRITICAL: The entire content (question text, all 4 options, and the explanation) MUST be written in ${targetLang}.
   Category: ${category}.
   Difficulty: ${difficulty}/10.
   Unique IDs to avoid: ${excludeIds.slice(-20).join(', ')}.
-  JSON: [{"id": string, "text": string, "options": [4 strings], "correctAnswer": string, "explanation": string}]`;
+  Output strictly as JSON: [{"id": string, "text": string, "options": [4 strings], "correctAnswer": string, "explanation": string}]`;
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });

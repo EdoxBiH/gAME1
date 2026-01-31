@@ -11,6 +11,7 @@ interface QuizCardProps {
   isMuted: boolean;
   language: Language;
   isPaused?: boolean;
+  categoryLabel: string;
 }
 
 const TRANSLATIONS = {
@@ -20,16 +21,12 @@ const TRANSLATIONS = {
   timesUp: { Bosanski: "VRIJEME!", English: "TIME!", Deutsch: "ZEIT!" }
 };
 
-const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMuted, language, isPaused }) => {
+const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMuted, language, isPaused, categoryLabel }) => {
   const [selected, setSelected] = useState<string | null>(null);
   const [isWrong, setIsWrong] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10);
   
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    audioService.setMute(isMuted);
-  }, [isMuted]);
 
   useEffect(() => {
     if (isPaused || selected) {
@@ -127,7 +124,9 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMut
       </div>
 
       <div className="flex justify-between items-center mb-4 md:mb-8">
-        <span className="bg-white/5 text-white/40 border border-white/5 px-2 py-0.5 rounded-full text-[7px] md:text-[10px] font-black uppercase tracking-widest">{question.category}</span>
+        <span className="bg-white/5 text-white/40 border border-white/5 px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest leading-none">
+          {categoryLabel}
+        </span>
         <div className="flex items-center space-x-2 md:space-x-3">
           <span className={`text-[10px] md:text-xs font-black tabular-nums ${timeLeft <= 3 ? 'text-rose-500 animate-pulse' : 'text-white/40'}`}>{timeLeft}s</span>
           <div className="flex space-x-0.5 md:space-x-1">
