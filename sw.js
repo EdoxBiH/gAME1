@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'tap-football-v2026-v5';
+const CACHE_NAME = 'tap-football-v2026-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -18,7 +18,7 @@ const ASSETS_TO_CACHE = [
   'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
   'https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3',
   'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000',
-  'https://i.imgur.com/EgHOWpF.png'
+  'https://cdn-icons-png.flaticon.com/512/53/53283.png'
 ];
 
 self.addEventListener('install', (event) => {

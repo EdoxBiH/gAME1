@@ -6,24 +6,6 @@ import { generateQuestions } from './services/geminiService';
 import { audioService } from './services/audioService';
 import QuizCard from './components/QuizCard';
 
-const QuizSkeleton: React.FC = () => (
-  <div className="relative w-full bg-black/80 backdrop-blur-3xl rounded-[1.5rem] md:rounded-[3rem] p-4 md:p-8 border border-white/10 shadow-2xl">
-    <div className="absolute top-0 left-0 w-full h-1 overflow-hidden rounded-t-[1.5rem] md:rounded-t-[3rem]">
-      <div className="h-full bg-emerald-500/20 shimmer" />
-    </div>
-    <div className="flex justify-between items-center mb-4 md:mb-8">
-      <div className="w-20 h-4 md:w-32 md:h-6 rounded-full shimmer" />
-      <div className="w-12 h-4 md:w-16 md:h-6 rounded-full shimmer" />
-    </div>
-    <div className="w-full h-8 md:h-12 rounded-lg mb-6 md:mb-12 shimmer" />
-    <div className="grid grid-cols-1 gap-2 md:gap-4">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-12 md:h-16 rounded-xl md:rounded-2xl border border-white/5 shimmer" />
-      ))}
-    </div>
-  </div>
-);
-
 const INITIAL_LEVELS: LevelConfig[] = [
   { id: 1, name: { Bosanski: "Početnik", English: "Beginner", Deutsch: "Anfänger" }, minDifficulty: 1, maxDifficulty: 3, questionsPerLevel: 20, unlocked: true },
   { id: 2, name: { Bosanski: "Ekspert", English: "Expert", Deutsch: "Experte" }, minDifficulty: 4, maxDifficulty: 7, questionsPerLevel: 20, unlocked: false },
@@ -54,10 +36,9 @@ const TRANSLATIONS = {
   playAgain: { Bosanski: "POČETNA", English: "HOME", Deutsch: "START" },
   retry: { Bosanski: "POKUŠAJ PONOVO", English: "TRY AGAIN", Deutsch: "WIEDERHOLEN" },
   resume: { Bosanski: "NASTAVI", English: "RESUME", Deutsch: "WEITER" },
-  scorePoints: { Bosanski: "{n} BODOVA", English: "{n} POINTS", Deutsch: "{n} PUNKTE" },
   start: { Bosanski: "KRENI", English: "START", Deutsch: "START" },
   startGame: { Bosanski: "ZAPOČNI IGRU", English: "START GAME", Deutsch: "JETZT SPIELEN" },
-  generating: { Bosanski: "Sastavljam pitanja...", English: "Scouting questions...", Deutsch: "Fragen werden erstellt..." },
+  generating: { Bosanski: "Učitavam...", English: "Loading...", Deutsch: "Laden..." },
   selectCategory: { Bosanski: "Izaberi kategoriju", English: "Pick category", Deutsch: "Kategorie" },
   enterNickname: { Bosanski: "Nadimak", English: "Nickname", Deutsch: "Name" },
   leaderboard: { Bosanski: "RANKING 2026", English: "RANKING 2026", Deutsch: "RANKING 2026" },
@@ -125,7 +106,7 @@ const CATEGORY_TRANSLATIONS: Record<Category, Record<Language, string>> = {
   [Category.ALL]: { Bosanski: "SVE", English: "ALL", Deutsch: "ALLE" }
 };
 
-const GAME_LOGO = "https://i.imgur.com/EgHOWpF.png";
+const GAME_LOGO = "https://cdn-icons-png.flaticon.com/512/53/53283.png";
 
 const StadiumAtmosphere: React.FC = () => {
   return (
@@ -621,15 +602,9 @@ const App: React.FC = () => {
                   <div className="flex-1 flex flex-col justify-start md:justify-center overflow-y-auto custom-scrollbar">
                     <AnimatePresence mode="wait">
                       {loading && questions.length <= currentQuestionIndex ? (
-                        <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center space-y-4 md:space-y-10 py-4 md:py-20 w-full">
-                          <QuizSkeleton />
-                          <div className="flex flex-col items-center gap-4">
-                            <div className="relative">
-                              <div className="w-12 h-12 md:w-16 md:h-16 border-3 md:border-4 border-emerald-500/10 rounded-full" />
-                              <div className="absolute top-0 w-12 h-12 md:w-16 md:h-16 border-3 md:border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                            </div>
-                            <p className="text-emerald-500 font-black text-[9px] md:text-xs uppercase tracking-[0.4em] animate-pulse">{t('generating')}</p>
-                          </div>
+                        <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center space-y-4 md:y-6 py-20">
+                          <div className="relative"><div className="w-12 h-12 md:w-20 md:h-20 border-3 md:border-4 border-emerald-500/10 rounded-full" /><div className="absolute top-0 w-12 h-12 md:w-20 md:h-20 border-3 md:border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>
+                          <p className="text-emerald-500 font-black text-[9px] md:text-xs uppercase tracking-[0.4em] animate-pulse">{t('generating')}</p>
                         </motion.div>
                       ) : questions[currentQuestionIndex] ? (
                         <div className="w-full pb-4">
