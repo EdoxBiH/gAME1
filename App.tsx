@@ -1,10 +1,11 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Category, Question, GameState, LevelConfig, Language, LeaderboardEntry, Achievement, UserStats } from './types';
 import { generateQuestions } from './services/geminiService';
 import { audioService } from './services/audioService';
 import QuizCard from './components/QuizCard';
+
+const VERSION = "1.3.2";
 
 const INITIAL_LEVELS: LevelConfig[] = [
   { id: 1, name: { Bosanski: "Početnik", English: "Beginner", Deutsch: "Anfänger" }, minDifficulty: 1, maxDifficulty: 3, questionsPerLevel: 20, unlocked: true },
@@ -57,7 +58,8 @@ const TRANSLATIONS = {
   trophyRoom: { Bosanski: "TROFEJNA SALA", English: "TROPHY ROOM", Deutsch: "TROPHÄENRAUM" },
   unlockedToast: { Bosanski: "OTKLJUČANO!", English: "UNLOCKED!", Deutsch: "FREIGESCHALTET!" },
   exit: { Bosanski: "IZAĐI", English: "EXIT", Deutsch: "BEENDEN" },
-  quitConfirm: { Bosanski: "Želite li prekinuti igru?", English: "Do you want to quit?", Deutsch: "Möchten Sie das Spiel beenden?" },
+  exitGame: { Bosanski: "PREKINI IGRU", English: "EXIT GAME", Deutsch: "SPIEL BEENDEN" },
+  quitConfirm: { Bosanski: "Želite li prekinuti igru i vratiti se na početak?", English: "Do you want to quit the game and restart session?", Deutsch: "Möchten Sie das Spiel beenden?" },
   resetData: { Bosanski: "RESTARTUJ NAPREDAK", English: "RESET PROGRESS", Deutsch: "FORTSCHRITT LÖSCHEN" },
   resetConfirm: { Bosanski: "Ovo će obrisati sve trofeje i nivoe. Sigurno?", English: "This will erase all trophies and levels. Sure?", Deutsch: "Dies loescht alle Trophaeen und Levels. Sicher?" },
   categoriesDone: { Bosanski: "Kategorije: {done}/6", English: "Categories: {done}/6", Deutsch: "Kategorien: {done}/6" },
@@ -66,7 +68,8 @@ const TRANSLATIONS = {
   lvl: { Bosanski: "NIVO", English: "LVL", Deutsch: "STUFE" },
   questionLabel: { Bosanski: "PIT", English: "Q", Deutsch: "FR" },
   completedBadge: { Bosanski: "ZAVRŠENO", English: "COMPLETED", Deutsch: "ERLEDIGT" },
-  unlockedBadge: { Bosanski: "OTKLJUČANO", English: "UNLOCKED", Deutsch: "FREIGESCHALTET" }
+  unlockedBadge: { Bosanski: "OTKLJUČANO", English: "UNLOCKED", Deutsch: "FREIGESCHALTET" },
+  quitLabel: { Bosanski: "IZLAZ", English: "EXIT", Deutsch: "ENDE" }
 };
 
 const CATEGORY_VISUALS: Record<Category, { icon: string }> = {
@@ -77,6 +80,8 @@ const CATEGORY_VISUALS: Record<Category, { icon: string }> = {
   [Category.COACHES]: { icon: '📋' },
   [Category.ALL]: { icon: '⚽' },
 };
+
+const LANGUAGE_FLAGS: Record<Language, string> = { 'Bosanski': '🇧🇦', 'English': '🇬🇧', 'Deutsch': '🇩🇪' };
 
 const LANGUAGE_THEMES: Record<Language, { gradient: string, glow: string, accent: string }> = {
   'Bosanski': { 
@@ -96,7 +101,6 @@ const LANGUAGE_THEMES: Record<Language, { gradient: string, glow: string, accent
   }
 };
 
-const LANGUAGE_FLAGS: Record<Language, string> = { 'Bosanski': '🇧🇦', 'English': '🇬🇧', 'Deutsch': '🇩🇪' };
 const CATEGORY_TRANSLATIONS: Record<Category, Record<Language, string>> = {
   [Category.PLAYERS]: { Bosanski: "IGRAČI", English: "PLAYERS", Deutsch: "SPIELER" },
   [Category.STADIUMS]: { Bosanski: "STADIONI", English: "STADIUMS", Deutsch: "STADIEN" },
@@ -106,7 +110,7 @@ const CATEGORY_TRANSLATIONS: Record<Category, Record<Language, string>> = {
   [Category.ALL]: { Bosanski: "SVE", English: "ALL", Deutsch: "ALLE" }
 };
 
-const GAME_LOGO = "https://cdn-icons-png.flaticon.com/512/53/53283.png";
+const GAME_LOGO = "https://i.imgur.com/EgHOWpF.png";
 
 const StadiumAtmosphere: React.FC = () => {
   return (
@@ -129,9 +133,61 @@ const StadiumAtmosphere: React.FC = () => {
   );
 };
 
+const SplashScreen: React.FC = () => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 1.2, filter: 'blur(20px)' }}
+      className="fixed inset-0 z-[300] bg-[#051622] flex flex-col items-center justify-center overflow-hidden"
+    >
+      <StadiumAtmosphere />
+      <motion.div 
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: [0, 1.5, 1], opacity: [0, 0.5, 0.2] }}
+        transition={{ duration: 1, ease: "easeOut" }}
+        className="absolute w-[80vw] h-[80vw] bg-emerald-500/20 rounded-full blur-[100px]"
+      />
+      <motion.div
+        initial={{ scale: 0, rotate: -180, opacity: 0 }}
+        animate={{ scale: 1, rotate: 0, opacity: 1 }}
+        transition={{ duration: 0.8, type: 'spring', bounce: 0.4 }}
+        className="relative z-10 mb-8"
+      >
+        <img src={GAME_LOGO} className="w-32 h-32 md:w-48 md:h-48 drop-shadow-[0_0_50px_rgba(16,185,129,0.8)]" alt="Logo" />
+      </motion.div>
+      <motion.div className="relative z-10 text-center">
+        <motion.h1 
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="text-5xl md:text-7xl font-black tracking-tighter text-white"
+        >
+          TAP FOOTBALL
+        </motion.h1>
+        <motion.div 
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: [0.5, 1.2, 1], opacity: 1 }}
+          transition={{ delay: 1, duration: 0.5 }}
+          className="mt-2 inline-block px-6 py-1 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+        >
+          <span className="text-2xl md:text-3xl font-black text-[#051622] tracking-widest">2026</span>
+        </motion.div>
+      </motion.div>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 1, 0] }}
+        transition={{ delay: 1.5, duration: 1.2, repeat: Infinity }}
+        className="absolute bottom-12 text-white/40 text-xs font-black tracking-[0.4em] uppercase"
+      >
+        Preparing the match...
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const App: React.FC = () => {
   const [isMuted, setIsMuted] = useState<boolean>(() => JSON.parse(localStorage.getItem('quiz_muted') || 'false'));
-  
   const [levels, setLevels] = useState<LevelConfig[]>(() => {
     const saved = localStorage.getItem('quiz_levels');
     return saved ? JSON.parse(saved) : INITIAL_LEVELS;
@@ -196,37 +252,16 @@ const App: React.FC = () => {
   const [unlockedToast, setUnlockedToast] = useState<Achievement | null>(null);
   
   const [streak, setStreak] = useState(0);
-  const [step, setStep] = useState<'HOME' | 'LEVEL_SELECT' | 'NICKNAME_INPUT' | 'CATEGORY_SELECT' | 'QUIZ'>('HOME');
+  const [step, setStep] = useState<'SPLASH' | 'HOME' | 'LEVEL_SELECT' | 'NICKNAME_INPUT' | 'CATEGORY_SELECT' | 'QUIZ'>('SPLASH');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  const checkAchievements = useCallback((newStats: UserStats, currentStreak: number, currentScore: number, isPerfect: boolean = false) => {
-    const newUnlocks: string[] = [];
-    ACHIEVEMENTS.forEach(ach => {
-      if (newStats.unlockedAchievements.includes(ach.id)) return;
-      
-      let condition = false;
-      if (ach.type === 'total_correct') condition = newStats.totalCorrect >= ach.requirement;
-      if (ach.type === 'streak') condition = currentStreak >= ach.requirement;
-      if (ach.type === 'perfect_game') condition = isPerfect;
-      if (ach.type === 'level_completed') condition = newStats.levelsCompleted.includes(ach.requirement);
-      if (ach.type === 'high_score') condition = currentScore >= ach.requirement;
-      if (ach.type === 'category_mastery' && ach.category) {
-        condition = (newStats.categoryCorrect[ach.category] || 0) >= ach.requirement;
-      }
-
-      if (condition) {
-        newUnlocks.push(ach.id);
-        setUnlockedToast(ach);
-        audioService.playSfx('correct', 1, true);
-        setTimeout(() => setUnlockedToast(null), 4000);
-      }
-    });
-
-    if (newUnlocks.length > 0) {
-      setUserStats(prev => ({ ...prev, unlockedAchievements: [...prev.unlockedAchievements, ...newUnlocks] }));
+  useEffect(() => {
+    if (step === 'SPLASH') {
+      const timer = setTimeout(() => setStep('HOME'), 3000);
+      return () => clearTimeout(timer);
     }
-  }, []);
+  }, [step]);
 
   const handleInteraction = () => {
     if (!hasInteracted) {
@@ -238,8 +273,7 @@ const App: React.FC = () => {
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     handleInteraction();
-    const newMute = !isMuted;
-    setIsMuted(newMute);
+    setIsMuted(!isMuted);
   };
 
   const fetchBatch = useCallback(async (level: number, category: Category, lang: Language, progress: number, history: string[]) => {
@@ -256,13 +290,7 @@ const App: React.FC = () => {
       );
 
       const result = await generateQuestions(category, dynamicDiff, lang, 5, history);
-      
-      if (result.questions.length > 0) {
-        setQuestions(prev => [...prev, ...result.questions]);
-      } else if (lang !== 'English') {
-        const fallbackResult = await generateQuestions(category, dynamicDiff, 'English', 5, history);
-        setQuestions(prev => [...prev, ...fallbackResult.questions]);
-      }
+      if (result.questions.length > 0) setQuestions(prev => [...prev, ...result.questions]);
     } catch (error) {
       console.error("fetchBatch failed:", error);
     } finally {
@@ -273,9 +301,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (step === 'QUIZ' && !loading && questions.length - currentQuestionIndex < 3 && gameState.questionsAnswered < 20 && !gameState.isGameOver) {
-      const historyIds = gameState.history.map(h => h.questionId);
-      const currentIds = questions.map(q => q.id);
-      fetchBatch(gameState.currentLevel, gameState.selectedCategory, gameState.language, gameState.questionsAnswered, [...historyIds, ...currentIds]);
+      fetchBatch(gameState.currentLevel, gameState.selectedCategory, gameState.language, gameState.questionsAnswered, [...gameState.history.map(h => h.questionId), ...questions.map(q => q.id)]);
     }
   }, [step, questions.length, currentQuestionIndex, gameState.currentLevel, gameState.selectedCategory, gameState.language, gameState.questionsAnswered, gameState.isGameOver, fetchBatch, loading]);
 
@@ -286,18 +312,30 @@ const App: React.FC = () => {
     setStreak(0);
     setCurrentQuestionIndex(0);
     setIsPaused(false);
-    setGameState(prev => ({ 
-      ...prev, 
-      selectedCategory: category, 
-      score: 0, 
-      questionsAnswered: 0, 
-      correctAnswers: 0, 
-      mistakes: 0, 
-      isGameOver: false, 
-      history: [] 
-    }));
+    setGameState(prev => ({ ...prev, selectedCategory: category, score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
     setStep('QUIZ');
   };
+
+  const checkAchievements = useCallback((newStats: UserStats, currentStreak: number, currentScore: number, isPerfect: boolean = false) => {
+    const newUnlocks: string[] = [];
+    ACHIEVEMENTS.forEach(ach => {
+      if (newStats.unlockedAchievements.includes(ach.id)) return;
+      let condition = false;
+      if (ach.type === 'total_correct') condition = newStats.totalCorrect >= ach.requirement;
+      if (ach.type === 'streak') condition = currentStreak >= ach.requirement;
+      if (ach.type === 'perfect_game') condition = isPerfect;
+      if (ach.type === 'high_score') condition = currentScore >= ach.requirement;
+      if (ach.type === 'category_mastery' && ach.category) condition = (newStats.categoryCorrect[ach.category] || 0) >= ach.requirement;
+
+      if (condition) {
+        newUnlocks.push(ach.id);
+        setUnlockedToast(ach);
+        audioService.playSfx('correct', 1, true);
+        setTimeout(() => setUnlockedToast(null), 4000);
+      }
+    });
+    if (newUnlocks.length > 0) setUserStats(prev => ({ ...prev, unlockedAchievements: [...prev.unlockedAchievements, ...newUnlocks] }));
+  }, []);
 
   const handleAnswer = (answer: string) => {
     if (isPaused) return;
@@ -307,9 +345,7 @@ const App: React.FC = () => {
     const isCorrect = answer === currentQ.correctAnswer;
     const newStreak = isCorrect ? streak + 1 : 0;
     const points = isCorrect ? Math.round((currentQ.difficulty || 1) * 10 * (1 + Math.floor(newStreak / 5) * 0.5)) : 0;
-    
-    const newMistakes = isCorrect ? gameState.mistakes : gameState.mistakes + 1;
-    const isOver = (gameState.questionsAnswered + 1 >= 20) || newMistakes >= 5;
+    const isOver = (gameState.questionsAnswered + 1 >= 20) || (isCorrect ? gameState.mistakes : gameState.mistakes + 1) >= 5;
     const finalScore = gameState.score + points;
 
     const updatedStats = {
@@ -318,96 +354,33 @@ const App: React.FC = () => {
       totalCorrect: isCorrect ? userStats.totalCorrect + 1 : userStats.totalCorrect,
       totalAnswered: userStats.totalAnswered + 1,
       maxStreak: Math.max(userStats.maxStreak, newStreak),
-      categoryCorrect: {
-        ...userStats.categoryCorrect,
-        [currentQ.category]: (userStats.categoryCorrect[currentQ.category] || 0) + (isCorrect ? 1 : 0)
-      }
+      categoryCorrect: { ...userStats.categoryCorrect, [currentQ.category]: (userStats.categoryCorrect[currentQ.category] || 0) + (isCorrect ? 1 : 0) }
     };
     
     if (isOver) {
-      const isPerfect = newMistakes === 0 && (gameState.questionsAnswered + 1 >= 20);
-      const isSuccess = (gameState.questionsAnswered + 1 >= 20) && newMistakes < 5;
-
-      if (isSuccess) {
+      if ((gameState.questionsAnswered + 1 >= 20) && (isCorrect ? gameState.mistakes : gameState.mistakes + 1) < 5) {
         const currentLevelCats = updatedStats.completedLevelCategories[gameState.currentLevel] || [];
         if (!currentLevelCats.includes(gameState.selectedCategory)) {
           const newLevelCats = [...currentLevelCats, gameState.selectedCategory];
-          updatedStats.completedLevelCategories = {
-            ...updatedStats.completedLevelCategories,
-            [gameState.currentLevel]: newLevelCats
-          };
-
-          const totalCategories = 6; 
-          if (newLevelCats.length === totalCategories) {
+          updatedStats.completedLevelCategories = { ...updatedStats.completedLevelCategories, [gameState.currentLevel]: newLevelCats };
+          if (newLevelCats.length === 6) {
             updatedStats.levelsCompleted = [...new Set([...updatedStats.levelsCompleted, gameState.currentLevel])];
             setLevels(prev => prev.map(l => l.id === gameState.currentLevel + 1 ? {...l, unlocked: true} : l));
           }
         }
       }
-      
-      checkAchievements(updatedStats, newStreak, finalScore, isPerfect);
-      
-      setLeaderboard(prev => {
-        const updated = [...prev, { name: gameState.nickname || 'Player', score: finalScore, country: LANGUAGE_FLAGS[gameState.language], timestamp: Date.now(), isUser: true }].sort((a, b) => b.score - a.score).slice(0, 100);
-        localStorage.setItem('quiz_leaderboard', JSON.stringify(updated));
-        return updated;
-      });
-    } else {
-      checkAchievements(updatedStats, newStreak, finalScore, false);
+      setLeaderboard(prev => [...prev, { name: gameState.nickname || 'Player', score: finalScore, country: LANGUAGE_FLAGS[gameState.language], timestamp: Date.now(), isUser: true }].sort((a, b) => b.score - a.score).slice(0, 100));
     }
-
+    checkAchievements(updatedStats, newStreak, finalScore, isOver && (isCorrect ? gameState.mistakes : gameState.mistakes + 1) === 0);
     setUserStats(updatedStats);
-    setGameState(prev => ({
-      ...prev,
-      score: finalScore,
-      questionsAnswered: prev.questionsAnswered + 1,
-      correctAnswers: isCorrect ? prev.correctAnswers + 1 : prev.correctAnswers,
-      mistakes: newMistakes,
-      isGameOver: isOver,
-      history: [...prev.history, { questionId: currentQ.id, isCorrect }]
-    }));
-
+    setGameState(prev => ({ ...prev, score: finalScore, questionsAnswered: prev.questionsAnswered + 1, correctAnswers: isCorrect ? prev.correctAnswers + 1 : prev.correctAnswers, mistakes: isCorrect ? prev.mistakes : prev.mistakes + 1, isGameOver: isOver, history: [...prev.history, { questionId: currentQ.id, isCorrect }] }));
     setStreak(newStreak);
     if (!isOver) setCurrentQuestionIndex(prev => prev + 1);
   };
 
-  const resetAllProgress = () => {
-    if (window.confirm(t('resetConfirm'))) {
-      audioService.playSfx('exit', 0.5, true);
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
-
-  const handleShare = async () => {
-    audioService.playSfx('click', 0.4);
-    const accuracy = Math.round((gameState.correctAnswers / Math.max(1, gameState.questionsAnswered)) * 100);
-    const text = t('shareText')
-      .replace('{score}', gameState.score.toString())
-      .replace('{accuracy}', accuracy.toString());
-    const url = window.location.origin + window.location.pathname;
-
-    if (navigator.share) {
-      try { await navigator.share({ title: 'TAP FOOTBALL 2026', text: text, url: url }); } catch (err) { console.error('Share failed:', err); }
-    } else {
-      const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text + " " + url)}`;
-      window.open(shareUrl, '_blank');
-      navigator.clipboard.writeText(`${text} ${url}`);
-      alert(t('copied'));
-    }
-  };
-
   const handleExitGame = () => {
     audioService.playSfx('exit', 0.6, true);
-    setGameState(prev => ({
-      ...prev,
-      score: 0,
-      questionsAnswered: 0,
-      correctAnswers: 0,
-      mistakes: 0,
-      isGameOver: false,
-      history: []
-    }));
+    setGameState(prev => ({ ...prev, score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
     setStep('HOME');
     setQuestions([]);
     setCurrentQuestionIndex(0);
@@ -415,22 +388,50 @@ const App: React.FC = () => {
     setIsPaused(false);
   };
 
-  const t = (key: keyof typeof TRANSLATIONS) => {
-    const entry = TRANSLATIONS[key];
-    if (!entry) return key;
-    return (entry as any)[gameState.language] || (entry as any)['English'] || key;
+  const handleQuitToSplash = () => {
+    if (window.confirm(t('quitConfirm'))) {
+      audioService.playSfx('exit', 0.6, true);
+      setGameState(prev => ({ ...prev, nickname: '', score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
+      setStep('SPLASH');
+      setQuestions([]);
+      setCurrentQuestionIndex(0);
+      setStreak(0);
+      setIsPaused(false);
+    }
   };
 
-  const isWin = gameState.questionsAnswered >= 20 && gameState.mistakes < 5;
+  // Define the resetAllProgress function to fix line 622 error
+  const resetAllProgress = () => {
+    if (window.confirm(t('resetConfirm'))) {
+      audioService.playSfx('exit', 0.6, true);
+      const initialStats: UserStats = { 
+        totalPoints: 0, totalCorrect: 0, totalAnswered: 0, maxStreak: 0, 
+        levelsCompleted: [], unlockedAchievements: [], categoryCorrect: {},
+        completedLevelCategories: {} 
+      };
+      setUserStats(initialStats);
+      setLevels(INITIAL_LEVELS);
+      localStorage.setItem('quiz_user_stats', JSON.stringify(initialStats));
+      localStorage.setItem('quiz_levels', JSON.stringify(INITIAL_LEVELS));
+      setShowTrophyRoom(false);
+      setStep('HOME');
+    }
+  };
+
+  const t = (key: keyof typeof TRANSLATIONS) => (TRANSLATIONS as any)[key][gameState.language] || (TRANSLATIONS as any)[key]['English'] || key;
+  const langTheme = LANGUAGE_THEMES[gameState.language] || LANGUAGE_THEMES['English'];
   const accuracyPercent = Math.round((gameState.correctAnswers / Math.max(1, gameState.questionsAnswered)) * 100);
 
-  const langTheme = LANGUAGE_THEMES[gameState.language] || LANGUAGE_THEMES['English'];
+  const screenVariants: Variants = {
+    initial: { opacity: 0, x: 20 },
+    animate: { opacity: 1, x: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
+    exit: { opacity: 0, x: -20, transition: { duration: 0.3, ease: "easeIn" as const } }
+  };
 
   return (
     <div className="flex-1 flex flex-col h-full grass-pattern relative overflow-hidden" onClick={handleInteraction}>
-      
       <StadiumAtmosphere />
-
+      <AnimatePresence>{step === 'SPLASH' && <SplashScreen key="splash" />}</AnimatePresence>
       <AnimatePresence>
         {unlockedToast && (
           <motion.div initial={{ y: -100, opacity: 0 }} animate={{ y: 20, opacity: 1 }} exit={{ y: -100, opacity: 0 }} className="fixed top-0 left-1/2 -translate-x-1/2 z-[200] w-[90%] max-w-sm pointer-events-none">
@@ -448,7 +449,7 @@ const App: React.FC = () => {
       <div className="relative z-10 flex-1 flex flex-col h-full">
         <AnimatePresence mode="wait">
           {step === 'HOME' ? (
-            <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 1.1 }} className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 safe-pt safe-pb">
+            <motion.div key="landing" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 safe-pt safe-pb">
               <div className="mb-4 md:mb-10 flex flex-col items-center w-full max-w-md">
                 <div className="flex gap-2 bg-white/5 backdrop-blur-xl p-1 rounded-full border border-white/10 mb-6 scale-90 md:scale-100">
                   {(Object.keys(LANGUAGE_FLAGS) as Language[]).map(lang => (
@@ -459,43 +460,37 @@ const App: React.FC = () => {
                 <motion.h1 className="mobile-title text-4xl md:text-7xl font-black tracking-tighter uppercase leading-[0.9] text-center mb-1 drop-shadow-2xl">TAP FOOTBALL<br/><span className="text-emerald-500">2026</span></motion.h1>
                 <motion.p className="text-[9px] md:text-xs font-bold text-white/30 tracking-[0.2em] uppercase text-center">{t('subTitle')}</motion.p>
               </div>
-
-              <div className="w-full max-w-[300px] md:max-w-[340px] space-y-2 md:space-y-4 mobile-compact">
+              <div className="w-full max-w-[300px] md:max-w-[340px] space-y-2 md:space-y-4 mobile-compact text-center">
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => { handleInteraction(); audioService.playSfx('playAgain', 0.5, true); setStep('LEVEL_SELECT'); }} className="mobile-btn-height w-full h-14 md:h-20 bg-emerald-500 text-white font-black rounded-2xl md:rounded-3xl shadow-[0_15px_40px_rgba(16,185,129,0.3)] uppercase text-sm md:text-base tracking-[0.2em] btn-glow">{t('startGame')}</motion.button>
                 <div className="grid grid-cols-2 gap-2 md:gap-3">
-                  <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowLeaderboard(true); setVisibleLeaderboardCount(10); }} className="h-12 md:h-16 bg-white/5 border border-white/10 text-white/60 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest backdrop-blur-md">🏆 RANK</button>
-                  <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowTrophyRoom(true); }} className="h-12 md:h-16 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest backdrop-blur-md">🏅 ROOM</button>
+                  <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowLeaderboard(true); }} className="h-12 md:h-16 bg-white/5 border border-white/10 text-white/60 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest">🏆 RANK</button>
+                  <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowTrophyRoom(true); }} className="h-12 md:h-16 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest">🏅 ROOM</button>
+                </div>
+                <div className="pt-4 flex justify-center">
+                   <button onClick={handleQuitToSplash} className="group flex items-center gap-2 px-6 py-2 rounded-full border border-white/5 bg-white/2 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all duration-300">
+                     <span className="text-white/20 group-hover:text-rose-500/60 font-black text-[9px] tracking-[0.4em] uppercase">{t('quitLabel')}</span>
+                   </button>
                 </div>
               </div>
-
               <div className="mt-6 md:mt-8">
                 <button onClick={toggleMute} className="text-sm p-3 bg-black/40 rounded-full border border-white/10 backdrop-blur-md w-10 h-10 md:w-12 md:h-12 flex items-center justify-center transition-all active:scale-90">{isMuted ? '🔇' : '🔊'}</button>
               </div>
             </motion.div>
           ) : step === 'LEVEL_SELECT' ? (
-            <motion.div key="level-select" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
+            <motion.div key="level-select" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
               <h2 className="text-xl md:text-4xl font-black uppercase tracking-tighter my-6 md:my-8">{t('pickLevel')}</h2>
               <div className="w-full max-w-sm space-y-2 md:space-y-4 mb-10">
                 {levels.map(level => {
                   const completedCatsCount = (userStats.completedLevelCategories[level.id] || []).length;
                   return (
-                    <motion.div 
-                      key={level.id} 
-                      onClick={() => { if(level.unlocked) { audioService.playSfx('click', 0.4); setGameState(prev => ({...prev, currentLevel: level.id})); setStep(gameState.nickname ? 'CATEGORY_SELECT' : 'NICKNAME_INPUT'); } }} 
-                      className={`p-4 md:p-8 rounded-[1.2rem] md:rounded-[2.5rem] border transition-all cursor-pointer flex justify-between items-center relative overflow-hidden ${level.unlocked ? 'bg-black/40 border-emerald-500/30 active:scale-95' : 'bg-black/20 border-white/5 opacity-40 grayscale'}`}
-                    >
+                    <motion.div key={level.id} onClick={() => { if(level.unlocked) { audioService.playSfx('click', 0.4); setGameState(prev => ({...prev, currentLevel: level.id})); setStep(gameState.nickname ? 'CATEGORY_SELECT' : 'NICKNAME_INPUT'); } }} className={`p-4 md:p-8 rounded-[1.2rem] md:rounded-[2.5rem] border transition-all cursor-pointer flex justify-between items-center relative overflow-hidden ${level.unlocked ? 'bg-black/40 border-emerald-500/30 active:scale-95' : 'bg-black/20 border-white/5 opacity-40 grayscale'}`}>
                       <div>
                         <span className="text-white/30 text-[8px] md:text-[10px] font-black uppercase block mb-0.5">{t('lvl')} {level.id}</span>
                         <h3 className="text-lg md:text-3xl font-black uppercase">{level.name[gameState.language] || level.name['English']}</h3>
-                        <p className="text-[9px] md:text-xs text-white/50 font-bold uppercase mt-1">
-                          {t('categoriesDone').replace('{done}', completedCatsCount.toString())}
-                        </p>
+                        <p className="text-[9px] md:text-xs text-white/50 font-bold uppercase mt-1">{t('categoriesDone').replace('{done}', completedCatsCount.toString())}</p>
                       </div>
                       {level.unlocked ? <span className="text-emerald-500 font-black text-xs md:text-base">GO →</span> : <span className="text-sm md:text-lg">🔒</span>}
-                      
-                      <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-full">
-                        <motion.div className="h-full bg-emerald-500/40" initial={{ width: 0 }} animate={{ width: `${(completedCatsCount / 6) * 100}%` }} />
-                      </div>
+                      <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-full"><motion.div className="h-full bg-emerald-500/40" initial={{ width: 0 }} animate={{ width: `${(completedCatsCount / 6) * 100}%` }} /></div>
                     </motion.div>
                   );
                 })}
@@ -503,7 +498,7 @@ const App: React.FC = () => {
               <button onClick={() => { audioService.playSfx('exit', 0.5, true); setStep('HOME'); }} className="mt-auto mb-4 text-[10px] md:text-xs font-black text-white/30 uppercase tracking-[0.4em] py-3 px-8 active:text-white">{t('back')}</button>
             </motion.div>
           ) : step === 'NICKNAME_INPUT' ? (
-            <motion.div key="nick" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-4 safe-pt safe-pb">
+            <motion.div key="nick" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center justify-center p-4 safe-pt safe-pb">
               <div className="bg-black/60 backdrop-blur-2xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border border-white/10 w-full max-w-[340px] text-center shadow-2xl">
                 <h2 className="text-xl md:text-3xl font-black mb-6 md:mb-8 uppercase tracking-tighter">{t('enterNickname')}</h2>
                 <input type="text" value={gameState.nickname} placeholder="Messi10..." onChange={(e) => setGameState(p => ({...p, nickname: e.target.value.substring(0, 15)}))} className="w-full h-14 md:h-20 bg-white/5 border border-white/10 rounded-xl md:rounded-3xl px-6 text-white text-lg md:text-xl font-bold mb-6 md:mb-8 focus:outline-none focus:border-emerald-500 text-center placeholder:text-white/10" />
@@ -511,52 +506,24 @@ const App: React.FC = () => {
               </div>
             </motion.div>
           ) : step === 'CATEGORY_SELECT' ? (
-            <motion.div key="cat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
+            <motion.div key="cat" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
                <h2 className="text-xl md:text-4xl font-black my-6 md:my-8 uppercase tracking-tighter text-white/40">{t('selectCategory')}</h2>
                <div className="grid grid-cols-2 gap-3 md:gap-6 w-full max-w-[500px] mb-12 px-2">
                   {Object.values(Category).map((cat, index) => {
                     if (cat === Category.ALL && index !== Object.values(Category).length - 1) return null;
-                    
                     const isAll = cat === Category.ALL;
                     const isDoneInCurrentLevel = (userStats.completedLevelCategories[gameState.currentLevel] || []).includes(cat);
                     const icon = CATEGORY_VISUALS[cat].icon;
-                    
                     return (
-                      <motion.div
-                        key={cat}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.05, type: 'spring', damping: 20 }}
-                        whileHover={{ scale: 1.05, translateY: -5 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleStartQuiz(cat)}
-                        className={`group relative overflow-hidden cursor-pointer rounded-2xl md:rounded-[2.5rem] border-2 shadow-xl backdrop-blur-3xl p-4 md:p-8 transition-shadow ${
-                          isAll 
-                          ? `col-span-2 bg-gradient-to-br ${langTheme.gradient} border-white/20 shadow-lg ${langTheme.glow}` 
-                          : `bg-black/40 ${langTheme.accent} hover:border-white/40 shadow-md ${langTheme.glow}`
-                        }`}
-                      >
+                      <motion.div key={cat} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.05, type: 'spring', damping: 20 }} whileHover={{ scale: 1.05, translateY: -5 }} whileTap={{ scale: 0.95 }} onClick={() => handleStartQuiz(cat)} className={`group relative overflow-hidden cursor-pointer rounded-2xl md:rounded-[2.5rem] border-2 shadow-xl backdrop-blur-3xl p-4 md:p-8 transition-shadow ${isAll ? `col-span-2 bg-gradient-to-br ${langTheme.gradient} border-white/20 shadow-lg` : `bg-black/40 ${langTheme.accent} hover:border-white/40 shadow-md`}`}>
                         <div className={`absolute inset-0 bg-gradient-to-br ${langTheme.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-500`} />
                         <div className="relative z-10 flex flex-col items-center text-center">
-                          <span className="text-4xl sm:text-5xl md:text-7xl mb-4 transform transition-transform duration-500 group-hover:rotate-12 group-hover:scale-125 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
-                            {icon}
-                          </span>
+                          <span className="text-4xl sm:text-5xl md:text-7xl mb-4 transform transition-transform duration-500 group-hover:rotate-12 group-hover:scale-125 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">{icon}</span>
                           <div className="flex flex-col items-center gap-1">
-                            <span className={`text-[10px] sm:text-xs md:text-sm font-black tracking-[0.2em] uppercase leading-none ${isAll ? 'text-white drop-shadow-md' : 'text-white/70 group-hover:text-white transition-colors'}`}>
-                              {CATEGORY_TRANSLATIONS[cat][gameState.language] || CATEGORY_TRANSLATIONS[cat]['English']}
-                            </span>
-                            {isDoneInCurrentLevel && (
-                              <motion.span 
-                                initial={{ opacity: 0, scale: 0 }} 
-                                animate={{ opacity: 1, scale: 1 }} 
-                                className="text-emerald-400 text-[10px] md:text-sm font-bold flex items-center gap-1 mt-1"
-                              >
-                                <span className="bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/40">{t('completedBadge')}</span>
-                              </motion.span>
-                            )}
+                            <span className={`text-[10px] sm:text-xs md:text-sm font-black tracking-[0.2em] uppercase leading-none ${isAll ? 'text-white drop-shadow-md' : 'text-white/70 group-hover:text-white transition-colors'}`}>{CATEGORY_TRANSLATIONS[cat][gameState.language] || CATEGORY_TRANSLATIONS[cat]['English']}</span>
+                            {isDoneInCurrentLevel && <motion.span initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} className="text-emerald-400 text-[10px] md:text-sm font-bold flex items-center gap-1 mt-1"><span className="bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/40">{t('completedBadge')}</span></motion.span>}
                           </div>
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                       </motion.div>
                     );
                   })}
@@ -564,61 +531,45 @@ const App: React.FC = () => {
                <button onClick={() => { audioService.playSfx('exit', 0.5, true); setStep('LEVEL_SELECT'); }} className="mt-auto mb-4 text-[10px] md:text-xs font-black text-white/30 uppercase tracking-[0.4em] py-3 px-8 hover:text-white transition-colors">{t('back')}</button>
             </motion.div>
           ) : (
-            <motion.div key="quiz" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col w-full max-w-xl mx-auto safe-pt safe-pb h-full overflow-hidden">
+            <motion.div key="quiz" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col w-full max-w-xl mx-auto safe-pt safe-pb h-full overflow-hidden">
               {gameState.isGameOver ? (
-                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex-1 flex flex-col items-center justify-center p-4">
-                  <div className={`bg-black/90 backdrop-blur-3xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border ${isWin ? 'border-emerald-500/40 shadow-[0_0_80px_rgba(16,185,129,0.15)]' : 'border-rose-500/40 shadow-[0_0_80px_rgba(244,63,94,0.15)]'} text-center w-full max-w-[360px] shadow-2xl relative overflow-hidden`}>
+                <div className="flex-1 flex flex-col items-center justify-center p-4">
+                  <div className={`bg-black/90 backdrop-blur-3xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border ${accuracyPercent >= 80 ? 'border-emerald-500/40 shadow-[0_0_80px_rgba(16,185,129,0.15)]' : 'border-rose-500/40 shadow-[0_0_80px_rgba(244,63,94,0.15)]'} text-center w-full max-w-[360px] shadow-2xl relative overflow-hidden`}>
                     <motion.img initial={{ scale: 0 }} animate={{ scale: 1 }} src={GAME_LOGO} className="w-10 h-10 md:w-16 mx-auto mb-4 md:mb-6" />
-                    <h1 className={`text-2xl md:text-5xl font-black mb-4 md:mb-6 uppercase tracking-tighter leading-none ${isWin ? 'text-emerald-400' : 'text-rose-500'}`}>{isWin ? t('success') : t('gameOver')}</h1>
-                    <div className="grid grid-cols-2 gap-2 md:gap-3 mb-6 md:mb-10">
-                      <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('totalScoreLabel')}</span><p className="text-xl md:text-2xl font-black text-white">{gameState.score}</p></div>
+                    <h1 className={`text-2xl md:text-5xl font-black mb-4 md:mb-6 uppercase tracking-tighter leading-none ${accuracyPercent >= 80 ? 'text-emerald-400' : 'text-rose-500'}`}>{accuracyPercent >= 80 ? t('success') : t('gameOver')}</h1>
+                    <div className="grid grid-cols-2 gap-2 md:gap-3 mb-6 md:mb-10 text-white">
+                      <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('totalScoreLabel')}</span><p className="text-xl md:text-2xl font-black">{gameState.score}</p></div>
                       <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('accuracyLabel')}</span><p className={`text-xl md:text-2xl font-black ${accuracyPercent > 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{accuracyPercent}%</p></div>
                     </div>
-                    <div className="space-y-2 md:space-y-3">
-                      <button onClick={handleExitGame} className="w-full h-12 md:h-16 bg-emerald-500 font-black rounded-xl md:rounded-2xl uppercase text-[10px] md:text-xs tracking-widest active:scale-95 transition-all">{t('playAgain')}</button>
-                      <button onClick={handleShare} className="w-full h-10 md:h-14 bg-white/10 border border-white/10 text-white font-black rounded-lg md:rounded-xl uppercase text-[9px] md:text-[10px] tracking-widest active:bg-white/20 transition-all flex items-center justify-center gap-2">📤 {t('shareBtn')}</button>
-                      <button onClick={() => { audioService.playSfx('playAgain', 0.6, true); handleStartQuiz(gameState.selectedCategory); }} className="w-full h-10 text-white/40 font-black uppercase text-[9px] md:text-[10px] tracking-widest hover:text-white transition-colors">{t('retry')}</button>
+                    <div className="space-y-2 md:space-y-3 text-white">
+                      <button onClick={handleExitGame} className="w-full h-12 md:h-16 bg-emerald-500 font-black rounded-xl md:rounded-2xl uppercase text-[10px] md:text-xs tracking-widest">{t('playAgain')}</button>
+                      <button onClick={() => { audioService.playSfx('playAgain', 0.6, true); handleStartQuiz(gameState.selectedCategory); }} className="w-full h-10 text-white/40 font-black uppercase text-[9px] md:text-[10px] tracking-widest">{t('retry')}</button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ) : (
                 <div className="flex-1 flex flex-col p-3 md:p-4 h-full overflow-hidden">
                   <header className="flex justify-between items-center mb-2 md:mb-4 bg-black/40 p-2 md:p-4 rounded-xl md:rounded-[2.5rem] border border-white/10 backdrop-blur-xl shrink-0">
-                     <div className="flex gap-2">
-                       <button onClick={() => { audioService.playSfx('click', 0.3); setIsPaused(true); }} className="w-8 h-8 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-[10px] md:text-sm active:scale-90">⏸</button>
-                     </div>
+                     <button onClick={() => { audioService.playSfx('click', 0.3); setIsPaused(true); }} className="w-8 h-8 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-[10px] md:text-sm active:scale-90 transition-all">⏸</button>
                      <div className="text-center">
                        <p className="text-white/30 text-[7px] md:text-[8px] font-black uppercase mb-0.5">{t('lvl')} {gameState.currentLevel} • {gameState.score}</p>
-                       <div className="flex gap-0.5">{[...Array(5)].map((_, i) => (<span key={i} className={`text-[10px] md:text-xs ${i >= (5 - gameState.mistakes) ? 'opacity-20 grayscale' : 'drop-shadow-glow'}`}>❤️</span>))}</div>
+                       <div className="flex gap-0.5">{[...Array(5)].map((_, i) => (<span key={i} className={`text-[10px] md:text-xs ${i >= (5 - gameState.mistakes) ? 'opacity-20 grayscale' : ''}`}>❤️</span>))}</div>
                      </div>
                      <div className="text-right">
                        <p className="text-white/30 text-[7px] md:text-[8px] font-black uppercase mb-0.5">{t('questionLabel')} {gameState.questionsAnswered + 1}/20</p>
                        <div className={`inline-block px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px] font-black ${streak >= 5 ? 'bg-orange-500 text-white animate-pulse' : 'bg-white/10 text-white/30'}`}>x{streak}</div>
                      </div>
                   </header>
-
                   <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mb-4 md:mb-6 shrink-0"><motion.div className="h-full bg-emerald-500" initial={{ width: 0 }} animate={{ width: `${(gameState.questionsAnswered / 20) * 100}%` }} transition={{ duration: 0.5 }} /></div>
-
                   <div className="flex-1 flex flex-col justify-start md:justify-center overflow-y-auto custom-scrollbar">
                     <AnimatePresence mode="wait">
                       {loading && questions.length <= currentQuestionIndex ? (
-                        <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center space-y-4 md:y-6 py-20">
+                        <motion.div key="loader" className="flex flex-col items-center justify-center space-y-4 md:y-6 py-20">
                           <div className="relative"><div className="w-12 h-12 md:w-20 md:h-20 border-3 md:border-4 border-emerald-500/10 rounded-full" /><div className="absolute top-0 w-12 h-12 md:w-20 md:h-20 border-3 md:border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>
                           <p className="text-emerald-500 font-black text-[9px] md:text-xs uppercase tracking-[0.4em] animate-pulse">{t('generating')}</p>
                         </motion.div>
                       ) : questions[currentQuestionIndex] ? (
-                        <div className="w-full pb-4">
-                          <QuizCard 
-                            key={questions[currentQuestionIndex].id} 
-                            question={questions[currentQuestionIndex]} 
-                            onAnswer={handleAnswer} 
-                            disabled={isPaused} 
-                            isMuted={isMuted} 
-                            language={gameState.language} 
-                            isPaused={isPaused}
-                            categoryLabel={CATEGORY_TRANSLATIONS[questions[currentQuestionIndex].category][gameState.language] || questions[currentQuestionIndex].category}
-                          />
-                        </div>
+                        <QuizCard key={questions[currentQuestionIndex].id} question={questions[currentQuestionIndex]} onAnswer={handleAnswer} disabled={isPaused} isMuted={isMuted} language={gameState.language} isPaused={isPaused} categoryLabel={CATEGORY_TRANSLATIONS[questions[currentQuestionIndex].category][gameState.language]} />
                       ) : null}
                     </AnimatePresence>
                   </div>
@@ -631,91 +582,63 @@ const App: React.FC = () => {
 
       <AnimatePresence>
         {isPaused && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-6" onClick={() => { audioService.playSfx('exit', 0.5, true); setIsPaused(false); }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-6" onClick={() => setIsPaused(false)}>
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-black/40 border border-white/10 w-full max-w-[300px] rounded-[2rem] p-8 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
                <span className="text-4xl block mb-6">⚽</span>
                <h3 className="text-xl font-black uppercase mb-8 tracking-tighter">PAUSED</h3>
                <div className="space-y-3">
-                 <button onClick={() => { audioService.playSfx('click', 0.4); setIsPaused(false); }} className="w-full h-14 bg-emerald-500 text-white font-black rounded-xl uppercase text-xs tracking-widest active:scale-95 transition-all">{t('resume')}</button>
-                 <button onClick={handleExitGame} className="w-full h-12 bg-rose-500/20 border border-rose-500/30 text-rose-500 font-black rounded-lg uppercase text-[9px] tracking-widest active:scale-95 transition-all">{t('exit')}</button>
+                 <button onClick={() => { audioService.playSfx('click', 0.4); setIsPaused(false); }} className="w-full h-14 bg-emerald-500 text-white font-black rounded-xl uppercase text-xs tracking-widest">{t('resume')}</button>
+                 <button onClick={handleExitGame} className="w-full h-12 bg-rose-500/10 border border-rose-500/20 text-rose-500 font-black rounded-lg uppercase text-[9px] tracking-widest">{t('exitGame')}</button>
                </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {showLeaderboard && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 safe-pt safe-pb" onClick={() => { audioService.playSfx('exit', 0.5, true); setShowLeaderboard(false); }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 safe-pt safe-pb" onClick={() => setShowLeaderboard(false)}>
             <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-black/60 border border-white/10 w-full max-w-[340px] rounded-[2rem] p-6 max-h-[85vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
               <h3 className="text-center text-white font-black text-lg uppercase mb-6 tracking-tighter">{t('leaderboard')}</h3>
               <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar mb-6 space-y-2">
                 {leaderboard.slice(0, visibleLeaderboardCount).map((user, i) => (
-                  <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${user.isUser ? 'bg-emerald-500/20 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/5'}`}>
+                  <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${user.isUser ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-white/5 border-white/5'}`}>
                     <div className="flex items-center space-x-2">
                       <span className="font-black text-[9px] w-4 opacity-30">{i + 1}.</span>
                       <span className="font-bold text-xs truncate max-w-[120px]">{user.name}</span>
                       <span className="text-[10px]">{user.country}</span>
-                      {user.isUser && (
-                        <span className="bg-emerald-500 text-[7px] font-black text-white px-1 py-0.5 rounded-sm ml-1 leading-none">{t('youBadge')}</span>
-                      )}
                     </div>
                     <span className="text-emerald-400 font-black text-xs">{user.score}</span>
                   </div>
                 ))}
-                
-                {visibleLeaderboardCount < leaderboard.length && (
-                  <button 
-                    onClick={() => { audioService.playSfx('click', 0.3); setVisibleLeaderboardCount(prev => prev + 10); }} 
-                    className="w-full py-4 text-[9px] font-black text-white/30 uppercase tracking-[0.3em] hover:text-white transition-colors"
-                  >
-                    {t('loadMore')}
-                  </button>
-                )}
+                {visibleLeaderboardCount < leaderboard.length && <button onClick={() => setVisibleLeaderboardCount(prev => prev + 10)} className="w-full py-4 text-[9px] font-black text-white/30 uppercase tracking-[0.3em]">{t('loadMore')}</button>}
               </div>
-              <button onClick={() => { audioService.playSfx('exit', 0.5, true); setShowLeaderboard(false); }} className="w-full h-12 bg-white text-black font-black rounded-xl uppercase text-[10px] tracking-widest active:scale-95 shrink-0 transition-all">{t('close')}</button>
+              <button onClick={() => setShowLeaderboard(false)} className="w-full h-12 bg-white text-black font-black rounded-xl uppercase text-[10px] tracking-widest">{t('close')}</button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {showTrophyRoom && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 safe-pt safe-pb" onClick={() => { audioService.playSfx('exit', 0.5, true); setShowTrophyRoom(false); }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 safe-pt safe-pb" onClick={() => setShowTrophyRoom(false)}>
             <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-black/60 border border-yellow-500/20 w-full max-w-[380px] rounded-[2rem] p-5 md:p-8 max-h-[85vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="text-center mb-6 shrink-0"><span className="text-3xl block mb-1">🏆</span><h3 className="text-white font-black text-lg uppercase tracking-tighter">{t('trophyRoom')}</h3></div>
               <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar mb-6">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 text-white">
                   {ACHIEVEMENTS.map((ach) => {
                     const isUnlocked = userStats.unlockedAchievements.includes(ach.id);
-                    let progress = 0;
-                    if (ach.type === 'total_correct') progress = userStats.totalCorrect;
-                    else if (ach.type === 'streak') progress = userStats.maxStreak;
-                    else if (ach.type === 'category_mastery' && ach.category) progress = userStats.categoryCorrect[ach.category] || 0;
-                    else if (ach.type === 'high_score') progress = 0;
-                    else if (ach.type === 'perfect_game') progress = isUnlocked ? 1 : 0;
-                    
-                    const progressPercent = Math.min(100, (progress / ach.requirement) * 100);
-
                     return (
-                      <div key={ach.id} className={`p-3 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-yellow-500/10 border-yellow-500/30 shadow-md' : 'bg-white/5 border-white/5 opacity-60'}`}>
-                        <span className={`text-2xl mb-2 ${isUnlocked ? 'grayscale-0' : 'grayscale brightness-50'}`}>{ach.icon}</span>
-                        <p className="text-[9px] font-black uppercase mb-1 leading-tight h-5 flex items-center">{ach.name[gameState.language] || ach.name['English']}</p>
-                        <p className="text-[7px] font-medium text-white/30 leading-tight h-6 flex items-center justify-center mb-2">{ach.description[gameState.language] || ach.description['English']}</p>
-                        {!isUnlocked && ach.type !== 'high_score' && ach.type !== 'perfect_game' && (
-                          <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                             <div className="h-full bg-yellow-500/40" style={{ width: `${progressPercent}%` }} />
-                          </div>
-                        )}
-                        {isUnlocked && <span className="text-[6px] font-black text-yellow-500 uppercase mt-0.5 tracking-widest">{t('unlockedBadge')}</span>}
+                      <div key={ach.id} className={`p-3 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-white/5 border-white/5 opacity-60'}`}>
+                        <span className={`text-2xl mb-2 ${isUnlocked ? '' : 'grayscale brightness-50'}`}>{ach.icon}</span>
+                        <p className="text-[9px] font-black uppercase mb-1">{ach.name[gameState.language] || ach.name['English']}</p>
+                        {isUnlocked && <span className="text-[6px] font-black text-yellow-500 uppercase mt-0.5">{t('unlockedBadge')}</span>}
                       </div>
                     );
                   })}
                 </div>
               </div>
               <div className="space-y-3 shrink-0">
-                <button onClick={resetAllProgress} className="w-full h-10 bg-rose-500/10 border border-rose-500/20 text-rose-500 font-black rounded-lg uppercase text-[8px] tracking-widest active:scale-95 transition-all">{t('resetData')}</button>
-                <button onClick={() => { audioService.playSfx('exit', 0.5, true); setShowTrophyRoom(false); }} className="w-full h-12 bg-white text-black font-black rounded-xl uppercase text-[10px] tracking-widest active:scale-95 transition-all">{t('close')}</button>
+                <button onClick={resetAllProgress} className="w-full h-10 bg-rose-500/10 border border-rose-500/20 text-rose-500 font-black rounded-lg uppercase text-[8px] tracking-widest">{t('resetData')}</button>
+                <button onClick={() => setShowTrophyRoom(false)} className="w-full h-12 bg-white text-black font-black rounded-xl uppercase text-[10px] tracking-widest">{t('close')}</button>
               </div>
             </motion.div>
           </motion.div>
