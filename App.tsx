@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Category, Question, GameState, LevelConfig, Language, LeaderboardEntry, Achievement, UserStats } from './types';
@@ -5,7 +6,7 @@ import { generateQuestions } from './services/geminiService';
 import { audioService } from './services/audioService';
 import QuizCard from './components/QuizCard';
 
-const VERSION = "1.3.2";
+const VERSION = "1.4.2";
 
 const INITIAL_LEVELS: LevelConfig[] = [
   { id: 1, name: { Bosanski: "Početnik", English: "Beginner", Deutsch: "Anfänger" }, minDifficulty: 1, maxDifficulty: 3, questionsPerLevel: 20, unlocked: true },
@@ -138,50 +139,75 @@ const SplashScreen: React.FC = () => {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 1.2, filter: 'blur(20px)' }}
-      className="fixed inset-0 z-[300] bg-[#051622] flex flex-col items-center justify-center overflow-hidden"
+      exit={{ opacity: 0, filter: 'blur(40px)', transition: { duration: 1.2 } }}
+      className="fixed inset-0 z-[500] bg-[#020b11] flex flex-col items-center justify-center overflow-hidden"
     >
-      <StadiumAtmosphere />
       <motion.div 
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: [0, 1.5, 1], opacity: [0, 0.5, 0.2] }}
-        transition={{ duration: 1, ease: "easeOut" }}
-        className="absolute w-[80vw] h-[80vw] bg-emerald-500/20 rounded-full blur-[100px]"
+        animate={{ opacity: [0, 0.1, 0.05, 0.2, 0.1, 1] }} 
+        transition={{ duration: 1, delay: 0.2 }}
+        className="absolute inset-0 bg-gradient-to-b from-emerald-500/20 to-transparent pointer-events-none" 
       />
+      
       <motion.div
-        initial={{ scale: 0, rotate: -180, opacity: 0 }}
-        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-        transition={{ duration: 0.8, type: 'spring', bounce: 0.4 }}
-        className="relative z-10 mb-8"
+        initial={{ scale: 0.1, z: -1000, opacity: 0 }}
+        animate={{ scale: 1, z: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
+        className="relative z-20 mb-12"
       >
-        <img src={GAME_LOGO} className="w-32 h-32 md:w-48 md:h-48 drop-shadow-[0_0_50px_rgba(16,185,129,0.8)]" alt="Logo" />
-      </motion.div>
-      <motion.div className="relative z-10 text-center">
-        <motion.h1 
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="text-5xl md:text-7xl font-black tracking-tighter text-white"
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 0.5, ease: "linear", delay: 0.8 }}
         >
-          TAP FOOTBALL
-        </motion.h1>
-        <motion.div 
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: [0.5, 1.2, 1], opacity: 1 }}
-          transition={{ delay: 1, duration: 0.5 }}
-          className="mt-2 inline-block px-6 py-1 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)]"
-        >
-          <span className="text-2xl md:text-3xl font-black text-[#051622] tracking-widest">2026</span>
+          <img src={GAME_LOGO} className="w-32 h-32 md:w-56 md:h-56 drop-shadow-[0_0_100px_rgba(16,185,129,0.8)]" alt="Logo" />
         </motion.div>
+        
+        <motion.div 
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: [0, 4], opacity: [0, 1, 0] }}
+          transition={{ duration: 0.5, delay: 1.3 }}
+          className="absolute inset-0 bg-white rounded-full blur-3xl z-30"
+        />
       </motion.div>
-      <motion.div 
+
+      <div className="relative z-10 text-center space-y-4">
+        <div className="overflow-hidden">
+          <motion.h1 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.4, duration: 0.8, type: 'spring' }}
+            className="text-5xl md:text-8xl font-black tracking-tighter text-white"
+          >
+            TAP FOOTBALL
+          </motion.h1>
+        </div>
+        
+        <motion.div 
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 2, duration: 0.5, type: 'spring' }}
+          className="inline-block px-10 py-2 bg-emerald-500 rounded-full shadow-[0_0_50px_rgba(16,185,129,0.6)]"
+        >
+          <span className="text-3xl md:text-5xl font-black text-[#051622] tracking-widest">2026</span>
+        </motion.div>
+      </div>
+
+      <div className="absolute bottom-20 w-64 h-1 bg-white/5 rounded-full overflow-hidden">
+        <motion.div 
+          initial={{ width: "0%" }}
+          animate={{ width: "100%" }}
+          transition={{ duration: 2.5, delay: 0.5, ease: "easeInOut" }}
+          className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]"
+        />
+      </div>
+
+      <motion.p
         initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 1, 0] }}
-        transition={{ delay: 1.5, duration: 1.2, repeat: Infinity }}
-        className="absolute bottom-12 text-white/40 text-xs font-black tracking-[0.4em] uppercase"
+        animate={{ opacity: [0, 0.5, 0] }}
+        transition={{ duration: 2, repeat: Infinity, delay: 2 }}
+        className="absolute bottom-10 text-emerald-500/60 text-[10px] font-black uppercase tracking-[0.5em]"
       >
-        Preparing the match...
-      </motion.div>
+        Kicking off session...
+      </motion.p>
     </motion.div>
   );
 };
@@ -243,6 +269,10 @@ const App: React.FC = () => {
     localStorage.setItem('quiz_language', gameState.language);
   }, [gameState.language]);
 
+  useEffect(() => {
+    localStorage.setItem('quiz_leaderboard', JSON.stringify(leaderboard));
+  }, [leaderboard]);
+
   const [hasInteracted, setHasInteracted] = useState(false);
   const [loading, setLoading] = useState(false);
   const fetchingRef = useRef(false);
@@ -258,7 +288,10 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (step === 'SPLASH') {
-      const timer = setTimeout(() => setStep('HOME'), 3000);
+      const timer = setTimeout(() => {
+        setStep('HOME');
+        audioService.playSfx('playAgain', 0.5);
+      }, 4000);
       return () => clearTimeout(timer);
     }
   }, [step]);
@@ -316,16 +349,16 @@ const App: React.FC = () => {
     setStep('QUIZ');
   };
 
-  const checkAchievements = useCallback((newStats: UserStats, currentStreak: number, currentScore: number, isPerfect: boolean = false) => {
+  const checkAchievements = useCallback((stats: UserStats, currentStreak: number, currentScore: number, isPerfect: boolean) => {
     const newUnlocks: string[] = [];
     ACHIEVEMENTS.forEach(ach => {
-      if (newStats.unlockedAchievements.includes(ach.id)) return;
+      if (stats.unlockedAchievements.includes(ach.id)) return;
       let condition = false;
-      if (ach.type === 'total_correct') condition = newStats.totalCorrect >= ach.requirement;
+      if (ach.type === 'total_correct') condition = stats.totalCorrect >= ach.requirement;
       if (ach.type === 'streak') condition = currentStreak >= ach.requirement;
       if (ach.type === 'perfect_game') condition = isPerfect;
       if (ach.type === 'high_score') condition = currentScore >= ach.requirement;
-      if (ach.type === 'category_mastery' && ach.category) condition = (newStats.categoryCorrect[ach.category] || 0) >= ach.requirement;
+      if (ach.type === 'category_mastery' && ach.category) condition = (stats.categoryCorrect[ach.category] || 0) >= ach.requirement;
 
       if (condition) {
         newUnlocks.push(ach.id);
@@ -334,7 +367,7 @@ const App: React.FC = () => {
         setTimeout(() => setUnlockedToast(null), 4000);
       }
     });
-    if (newUnlocks.length > 0) setUserStats(prev => ({ ...prev, unlockedAchievements: [...prev.unlockedAchievements, ...newUnlocks] }));
+    return newUnlocks;
   }, []);
 
   const handleAnswer = (answer: string) => {
@@ -345,35 +378,67 @@ const App: React.FC = () => {
     const isCorrect = answer === currentQ.correctAnswer;
     const newStreak = isCorrect ? streak + 1 : 0;
     const points = isCorrect ? Math.round((currentQ.difficulty || 1) * 10 * (1 + Math.floor(newStreak / 5) * 0.5)) : 0;
-    const isOver = (gameState.questionsAnswered + 1 >= 20) || (isCorrect ? gameState.mistakes : gameState.mistakes + 1) >= 5;
+    
+    const totalMistakes = isCorrect ? gameState.mistakes : gameState.mistakes + 1;
+    const totalAnswered = gameState.questionsAnswered + 1;
+    const isOver = totalAnswered >= 20 || totalMistakes >= 5;
     const finalScore = gameState.score + points;
 
-    const updatedStats = {
+    const updatedStats: UserStats = {
       ...userStats,
       totalPoints: userStats.totalPoints + points,
       totalCorrect: isCorrect ? userStats.totalCorrect + 1 : userStats.totalCorrect,
       totalAnswered: userStats.totalAnswered + 1,
       maxStreak: Math.max(userStats.maxStreak, newStreak),
-      categoryCorrect: { ...userStats.categoryCorrect, [currentQ.category]: (userStats.categoryCorrect[currentQ.category] || 0) + (isCorrect ? 1 : 0) }
+      categoryCorrect: { 
+        ...userStats.categoryCorrect, 
+        [currentQ.category]: (userStats.categoryCorrect[currentQ.category] || 0) + (isCorrect ? 1 : 0) 
+      }
     };
     
     if (isOver) {
-      if ((gameState.questionsAnswered + 1 >= 20) && (isCorrect ? gameState.mistakes : gameState.mistakes + 1) < 5) {
+      if (totalAnswered >= 20 && totalMistakes < 5) {
         const currentLevelCats = updatedStats.completedLevelCategories[gameState.currentLevel] || [];
         if (!currentLevelCats.includes(gameState.selectedCategory)) {
           const newLevelCats = [...currentLevelCats, gameState.selectedCategory];
-          updatedStats.completedLevelCategories = { ...updatedStats.completedLevelCategories, [gameState.currentLevel]: newLevelCats };
+          updatedStats.completedLevelCategories = { 
+            ...updatedStats.completedLevelCategories, 
+            [gameState.currentLevel]: newLevelCats 
+          };
           if (newLevelCats.length === 6) {
             updatedStats.levelsCompleted = [...new Set([...updatedStats.levelsCompleted, gameState.currentLevel])];
             setLevels(prev => prev.map(l => l.id === gameState.currentLevel + 1 ? {...l, unlocked: true} : l));
           }
         }
       }
-      setLeaderboard(prev => [...prev, { name: gameState.nickname || 'Player', score: finalScore, country: LANGUAGE_FLAGS[gameState.language], timestamp: Date.now(), isUser: true }].sort((a, b) => b.score - a.score).slice(0, 100));
+      
+      if (finalScore > 0) {
+        setLeaderboard(prev => {
+          const newList = [
+            ...prev, 
+            { name: gameState.nickname || 'Guest', score: finalScore, country: LANGUAGE_FLAGS[gameState.language], timestamp: Date.now(), isUser: true }
+          ];
+          return newList.sort((a, b) => b.score - a.score).slice(0, 100);
+        });
+      }
     }
-    checkAchievements(updatedStats, newStreak, finalScore, isOver && (isCorrect ? gameState.mistakes : gameState.mistakes + 1) === 0);
+
+    const isPerfect = isOver && totalMistakes === 0 && totalAnswered >= 20;
+    const newUnlocks = checkAchievements(updatedStats, newStreak, finalScore, isPerfect);
+    if (newUnlocks.length > 0) {
+      updatedStats.unlockedAchievements = [...new Set([...updatedStats.unlockedAchievements, ...newUnlocks])];
+    }
+    
     setUserStats(updatedStats);
-    setGameState(prev => ({ ...prev, score: finalScore, questionsAnswered: prev.questionsAnswered + 1, correctAnswers: isCorrect ? prev.correctAnswers + 1 : prev.correctAnswers, mistakes: isCorrect ? prev.mistakes : prev.mistakes + 1, isGameOver: isOver, history: [...prev.history, { questionId: currentQ.id, isCorrect }] }));
+    setGameState(prev => ({ 
+      ...prev, 
+      score: finalScore, 
+      questionsAnswered: totalAnswered, 
+      correctAnswers: isCorrect ? prev.correctAnswers + 1 : prev.correctAnswers, 
+      mistakes: totalMistakes, 
+      isGameOver: isOver, 
+      history: [...prev.history, { questionId: currentQ.id, isCorrect }] 
+    }));
     setStreak(newStreak);
     if (!isOver) setCurrentQuestionIndex(prev => prev + 1);
   };
@@ -400,7 +465,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Define the resetAllProgress function to fix line 622 error
   const resetAllProgress = () => {
     if (window.confirm(t('resetConfirm'))) {
       audioService.playSfx('exit', 0.6, true);
@@ -411,10 +475,11 @@ const App: React.FC = () => {
       };
       setUserStats(initialStats);
       setLevels(INITIAL_LEVELS);
-      localStorage.setItem('quiz_user_stats', JSON.stringify(initialStats));
-      localStorage.setItem('quiz_levels', JSON.stringify(INITIAL_LEVELS));
+      setLeaderboard([]);
+      localStorage.clear();
       setShowTrophyRoom(false);
-      setStep('HOME');
+      setStep('SPLASH');
+      window.location.reload();
     }
   };
 
@@ -434,7 +499,7 @@ const App: React.FC = () => {
       <AnimatePresence>{step === 'SPLASH' && <SplashScreen key="splash" />}</AnimatePresence>
       <AnimatePresence>
         {unlockedToast && (
-          <motion.div initial={{ y: -100, opacity: 0 }} animate={{ y: 20, opacity: 1 }} exit={{ y: -100, opacity: 0 }} className="fixed top-0 left-1/2 -translate-x-1/2 z-[200] w-[90%] max-w-sm pointer-events-none">
+          <motion.div initial={{ y: -100, opacity: 0 }} animate={{ y: 20, opacity: 1 }} exit={{ y: -100, opacity: 0 }} className="fixed top-0 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-sm pointer-events-none">
             <div className="bg-emerald-500 rounded-2xl p-4 shadow-[0_20px_40px_rgba(16,185,129,0.4)] border border-emerald-400 flex items-center space-x-4">
               <span className="text-2xl md:text-3xl shrink-0">{unlockedToast.icon}</span>
               <div>
@@ -489,7 +554,7 @@ const App: React.FC = () => {
                         <h3 className="text-lg md:text-3xl font-black uppercase">{level.name[gameState.language] || level.name['English']}</h3>
                         <p className="text-[9px] md:text-xs text-white/50 font-bold uppercase mt-1">{t('categoriesDone').replace('{done}', completedCatsCount.toString())}</p>
                       </div>
-                      {level.unlocked ? <span className="text-emerald-500 font-black text-xs md:text-base">GO →</span> : <span className="text-sm md:text-lg">🔒</span>}
+                      {level.unlocked ? <span className="text-emerald-500 font-black text-xs md:text-base">GO →</span> : <span className="text-sm md:lg">🔒</span>}
                       <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-full"><motion.div className="h-full bg-emerald-500/40" initial={{ width: 0 }} animate={{ width: `${(completedCatsCount / 6) * 100}%` }} /></div>
                     </motion.div>
                   );
@@ -600,16 +665,20 @@ const App: React.FC = () => {
             <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-black/60 border border-white/10 w-full max-w-[340px] rounded-[2rem] p-6 max-h-[85vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
               <h3 className="text-center text-white font-black text-lg uppercase mb-6 tracking-tighter">{t('leaderboard')}</h3>
               <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar mb-6 space-y-2">
-                {leaderboard.slice(0, visibleLeaderboardCount).map((user, i) => (
-                  <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${user.isUser ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-white/5 border-white/5'}`}>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-black text-[9px] w-4 opacity-30">{i + 1}.</span>
-                      <span className="font-bold text-xs truncate max-w-[120px]">{user.name}</span>
-                      <span className="text-[10px]">{user.country}</span>
+                {leaderboard.length === 0 ? (
+                  <p className="text-white/20 text-[10px] text-center uppercase tracking-widest py-10">No records yet...</p>
+                ) : (
+                  leaderboard.slice(0, visibleLeaderboardCount).map((user, i) => (
+                    <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${user.isUser ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-white/5 border-white/5'}`}>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-black text-[9px] w-4 opacity-30">{i + 1}.</span>
+                        <span className="font-bold text-xs truncate max-w-[120px]">{user.name}</span>
+                        <span className="text-[10px]">{user.country}</span>
+                      </div>
+                      <span className="text-emerald-400 font-black text-xs">{user.score}</span>
                     </div>
-                    <span className="text-emerald-400 font-black text-xs">{user.score}</span>
-                  </div>
-                ))}
+                  ))
+                )}
                 {visibleLeaderboardCount < leaderboard.length && <button onClick={() => setVisibleLeaderboardCount(prev => prev + 10)} className="w-full py-4 text-[9px] font-black text-white/30 uppercase tracking-[0.3em]">{t('loadMore')}</button>}
               </div>
               <button onClick={() => setShowLeaderboard(false)} className="w-full h-12 bg-white text-black font-black rounded-xl uppercase text-[10px] tracking-widest">{t('close')}</button>
@@ -627,10 +696,10 @@ const App: React.FC = () => {
                   {ACHIEVEMENTS.map((ach) => {
                     const isUnlocked = userStats.unlockedAchievements.includes(ach.id);
                     return (
-                      <div key={ach.id} className={`p-3 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-white/5 border-white/5 opacity-60'}`}>
-                        <span className={`text-2xl mb-2 ${isUnlocked ? '' : 'grayscale brightness-50'}`}>{ach.icon}</span>
-                        <p className="text-[9px] font-black uppercase mb-1">{ach.name[gameState.language] || ach.name['English']}</p>
-                        {isUnlocked && <span className="text-[6px] font-black text-yellow-500 uppercase mt-0.5">{t('unlockedBadge')}</span>}
+                      <div key={ach.id} className={`p-3 rounded-xl border flex flex-col items-center text-center transition-all ${isUnlocked ? 'bg-yellow-500/20 border-yellow-500/40 shadow-[0_0_15px_rgba(234,179,8,0.2)]' : 'bg-white/5 border-white/5 opacity-40'}`}>
+                        <span className={`text-2xl mb-2 ${isUnlocked ? 'drop-shadow-[0_0_15px_rgba(234,179,8,1)]' : 'grayscale brightness-50'}`}>{ach.icon}</span>
+                        <p className={`text-[9px] font-black uppercase mb-1 leading-tight ${isUnlocked ? 'text-white' : 'text-white/40'}`}>{ach.name[gameState.language] || ach.name['English']}</p>
+                        {isUnlocked && <span className="text-[6px] font-black text-yellow-500 uppercase mt-0.5 tracking-tighter">{t('unlockedBadge')}</span>}
                       </div>
                     );
                   })}

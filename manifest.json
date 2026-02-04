@@ -1,9 +1,9 @@
 
 {
   "name": "TAP FOOTBALL QUIZ 2026",
-  "short_name": "TapFootball",
-  "description": "The ultimate football quiz 2026. Test your knowledge with AI-powered questions. Play offline, win trophies, and become a football legend!",
-  "id": "com.tapfootball.quiz2026",
+  "short_name": "TapFootball2026",
+  "description": "The ultimate 2026 football quiz. Test your knowledge with AI-generated questions. Play offline, win trophies, and become a legend!",
+  "id": "com.tapfootball.quiz2026.app",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -12,7 +12,7 @@
   "theme_color": "#10b981",
   "orientation": "portrait",
   "categories": ["games", "sports", "education"],
-  "lang": "bs-BA",
+  "lang": "en-US",
   "dir": "ltr",
   "prefer_related_applications": false,
   "icons": [
@@ -41,14 +41,7 @@
       "sizes": "1080x1920",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Game Main Screen"
-    },
-    {
-      "src": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1920",
-      "sizes": "1920x1080",
-      "type": "image/jpeg",
-      "form_factor": "wide",
-      "label": "Game Desktop View"
+      "label": "Main Game Screen"
     }
   ]
 }
