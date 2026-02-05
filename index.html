@@ -191,5 +191,15 @@
 <body class="stadium-bg">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
+    <script>
+        // Pokušaj ulaska u Fullscreen na prvi dodir korisnika kako bi se sakrila traka pretraživača
+        document.addEventListener('touchstart', function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(e => {
+                    console.debug('Fullscreen entry blocked:', e);
+                });
+            }
+        }, { once: true });
+    </script>
 </body>
 </html>

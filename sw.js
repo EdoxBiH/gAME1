@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'tap-football-v2026-v1.4.2';
+const CACHE_NAME = 'tap-football-v2026-v1.4.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

@@ -6,7 +6,7 @@ import { generateQuestions } from './services/geminiService';
 import { audioService } from './services/audioService';
 import QuizCard from './components/QuizCard';
 
-const VERSION = "1.4.2";
+const VERSION = "1.4.5";
 
 const INITIAL_LEVELS: LevelConfig[] = [
   { id: 1, name: { Bosanski: "Početnik", English: "Beginner", Deutsch: "Anfänger" }, minDifficulty: 1, maxDifficulty: 3, questionsPerLevel: 20, unlocked: true },
@@ -59,7 +59,7 @@ const TRANSLATIONS = {
   trophyRoom: { Bosanski: "TROFEJNA SALA", English: "TROPHY ROOM", Deutsch: "TROPHÄENRAUM" },
   unlockedToast: { Bosanski: "OTKLJUČANO!", English: "UNLOCKED!", Deutsch: "FREIGESCHALTET!" },
   exit: { Bosanski: "IZAĐI", English: "EXIT", Deutsch: "BEENDEN" },
-  exitGame: { Bosanski: "PREKINI IGRU", English: "EXIT GAME", Deutsch: "SPIEL BEENDEN" },
+  exitGame: { Bosanski: "IZLAZ", English: "EXIT", Deutsch: "BEENDEN" },
   quitConfirm: { Bosanski: "Želite li prekinuti igru i vratiti se na početak?", English: "Do you want to quit the game and restart session?", Deutsch: "Möchten Sie das Spiel beenden?" },
   resetData: { Bosanski: "RESTARTUJ NAPREDAK", English: "RESET PROGRESS", Deutsch: "FORTSCHRITT LÖSCHEN" },
   resetConfirm: { Bosanski: "Ovo će obrisati sve trofeje i nivoe. Sigurno?", English: "This will erase all trophies and levels. Sure?", Deutsch: "Dies loescht alle Trophaeen und Levels. Sicher?" },
@@ -454,15 +454,14 @@ const App: React.FC = () => {
   };
 
   const handleQuitToSplash = () => {
-    if (window.confirm(t('quitConfirm'))) {
-      audioService.playSfx('exit', 0.6, true);
-      setGameState(prev => ({ ...prev, nickname: '', score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
-      setStep('SPLASH');
-      setQuestions([]);
-      setCurrentQuestionIndex(0);
-      setStreak(0);
-      setIsPaused(false);
-    }
+    // Uklonjena potvrda (window.confirm) radi direktnog izlaska
+    audioService.playSfx('exit', 0.6, true);
+    setGameState(prev => ({ ...prev, nickname: '', score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
+    setStep('SPLASH');
+    setQuestions([]);
+    setCurrentQuestionIndex(0);
+    setStreak(0);
+    setIsPaused(false);
   };
 
   const resetAllProgress = () => {

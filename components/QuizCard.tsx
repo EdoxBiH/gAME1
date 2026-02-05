@@ -27,6 +27,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMut
   const [timeLeft, setTimeLeft] = useState(10);
   
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastTickRef = useRef<number>(10);
 
   useEffect(() => {
     if (isPaused || selected) {
@@ -35,9 +36,16 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMut
       return;
     }
 
+    // High resolution timer (100ms) for smoother progress and better audio control
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
+        const nextVal = Math.max(0, prev - 0.1);
+        
+        // Handle Ticking Sound
+        const currentInt = Math.ceil(nextVal);
+        const prevInt = Math.ceil(prev);
+
+        if (nextVal <= 0) {
           if (timerRef.current) clearInterval(timerRef.current);
           audioService.stopSfx('tick');
           audioService.playSfx('timesUp', 0.8, true);
@@ -45,18 +53,21 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMut
           return 0;
         }
 
-        const nextVal = prev - 1;
-        if (nextVal <= 3) {
-          audioService.playSfx('tick', 0.8);
-        } else if (nextVal <= 6) {
-          audioService.playSfx('tick', 0.4);
-        } else {
-          audioService.playSfx('tick', 0.15);
+        // Ticking urgency: 
+        // Normal: Every 1s
+        // Urgent (last 3s): Every 0.5s
+        const isUrgent = nextVal <= 3.1;
+        const tickThreshold = isUrgent ? 0.5 : 1.0;
+        
+        if (lastTickRef.current - nextVal >= tickThreshold) {
+          lastTickRef.current = nextVal;
+          const volume = isUrgent ? 0.8 : 0.3;
+          audioService.playSfx('tick', volume);
         }
 
         return nextVal;
       });
-    }, 1000);
+    }, 1000 / 10);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -66,6 +77,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMut
 
   useEffect(() => {
     setTimeLeft(10);
+    lastTickRef.current = 10;
     setSelected(null);
     setIsWrong(false);
   }, [question.id]);
@@ -73,7 +85,6 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMut
   const handleTimeout = () => {
     if (selected) return;
     setIsWrong(true);
-    setTimeout(() => audioService.playSfx('wrong', 0.6, true), 200);
     setSelected("");
     setTimeout(() => { onAnswer(""); }, 2500);
   };
@@ -103,7 +114,6 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMut
 
   const t = (key: keyof typeof TRANSLATIONS) => TRANSLATIONS[key][language];
 
-  // Dynamic font sizing for long questions
   const getQuestionFontSize = (text: string) => {
     if (text.length > 80) return 'text-sm md:text-xl';
     if (text.length > 50) return 'text-base md:text-2xl';
@@ -119,7 +129,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMut
       <div className="absolute top-0 left-0 w-full h-1 overflow-hidden rounded-t-[1.5rem] md:rounded-t-[3rem]">
         <motion.div className={`h-full ${timeLeft <= 3 ? 'bg-rose-500' : 'bg-emerald-500'}`}
           initial={{ width: "100%" }} animate={{ width: selected ? "0%" : `${(timeLeft / 10) * 100}%` }}
-          transition={{ duration: selected || isPaused ? 0 : 1, ease: "linear" }}
+          transition={{ duration: selected || isPaused ? 0 : 0.1, ease: "linear" }}
         />
       </div>
 
@@ -128,7 +138,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ question, onAnswer, disabled, isMut
           {categoryLabel}
         </span>
         <div className="flex items-center space-x-2 md:space-x-3">
-          <span className={`text-[10px] md:text-xs font-black tabular-nums ${timeLeft <= 3 ? 'text-rose-500 animate-pulse' : 'text-white/40'}`}>{timeLeft}s</span>
+          <span className={`text-[10px] md:text-xs font-black tabular-nums ${timeLeft <= 3 ? 'text-rose-500 animate-pulse' : 'text-white/40'}`}>{Math.ceil(timeLeft)}s</span>
           <div className="flex space-x-0.5 md:space-x-1">
             {[...Array(5)].map((_, i) => (
               <div key={i} className={`w-0.5 h-2 md:w-1.5 md:h-4 rounded-full ${i < question.difficulty / 2 ? 'bg-emerald-500' : 'bg-white/5'}`} />
