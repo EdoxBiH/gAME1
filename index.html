@@ -5,175 +5,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- PWA / Mobile Compatibility -->
+    <!-- PWA / Fullscreen / TWA Support -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Tap Football">
-    <link rel="apple-touch-icon" href="https://i.imgur.com/EgHOWpF.png">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="full-screen" content="yes">
+    <meta name="browsermode" content="application">
     
-    <meta name="theme-color" content="#10b981">
-    <link rel="manifest" href="./manifest.json">
-    
-    <!-- Android specific -->
-    <meta name="format-detection" content="telephone=no">
+    <!-- Theme color usklađena sa pozadinom -->
+    <meta name="theme-color" content="#051622">
     <meta name="msapplication-TileColor" content="#051622">
+    
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/EgHOWpF.png">
     
     <title>TAP FOOTBALL QUIZ 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #10b981;
             --bg-dark: #051622;
-            --safe-top: env(safe-area-inset-top, 0px);
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
-            --safe-left: env(safe-area-inset-left, 0px);
-            --safe-right: env(safe-area-inset-right, 0px);
         }
         
-        * {
-            box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg-dark);
-            color: white;
+        html, body {
+            background-color: var(--bg-dark);
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
-            height: 100%;
-            width: 100%;
+            height: 100vh;
+            width: 100vw;
             overflow: hidden;
-            
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
+            position: fixed;
+            touch-action: none;
         }
 
         #root {
-            height: 100vh;
-            height: -webkit-fill-available;
+            height: 100%;
+            width: 100%;
             display: flex;
             flex-direction: column;
-            position: relative;
         }
 
         .stadium-bg {
-            background: linear-gradient(to bottom, rgba(5, 22, 34, 0.8), rgba(5, 22, 34, 1)), 
+            background: #051622;
+            background-image: linear-gradient(to bottom, rgba(5, 22, 34, 0.8), rgba(5, 22, 34, 1)), 
                         url('https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=2000');
             background-size: cover;
             background-position: center top;
-            background-attachment: fixed;
-        }
-
-        /* Animated Stadium Lights */
-        .light-beam {
-            position: absolute;
-            top: -20%;
-            width: 40vw;
-            height: 140vh;
-            background: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
-            transform-origin: top center;
-            pointer-events: none;
-            z-index: 0;
-            filter: blur(50px);
-        }
-
-        @keyframes sweep {
-            0% { transform: rotate(-25deg); opacity: 0.3; }
-            50% { transform: rotate(25deg); opacity: 0.6; }
-            100% { transform: rotate(-25deg); opacity: 0.3; }
-        }
-
-        .beam-1 { animation: sweep 12s infinite ease-in-out; left: -10%; }
-        .beam-2 { animation: sweep 18s infinite ease-in-out reverse; right: -10%; }
-
-        .grass-pattern {
-            background-image: radial-gradient(circle at 2px 2px, rgba(16, 185, 129, 0.05) 1px, transparent 0);
-            background-size: 40px 40px;
-        }
-
-        /* Atmospheric Dust Particles */
-        .dust {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.2;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            50% { opacity: 0.3; }
-            100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
-        }
-
-        .btn-glow {
-            animation: pulse-glow 2s infinite;
         }
         
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
-        .safe-pt {
-            padding-top: max(1rem, var(--safe-top));
-        }
-        .safe-pb {
-            padding-bottom: max(1rem, var(--safe-bottom));
-        }
-        .safe-px {
-            padding-left: var(--safe-left);
-            padding-right: var(--safe-right);
-        }
-
-        @media (max-height: 600px) {
-            .mobile-compact { gap: 0.15rem !important; }
-            .mobile-title { font-size: 1.5rem !important; }
-            .mobile-logo { width: 2.5rem !important; height: 2.5rem !important; margin-bottom: 0.5rem !important; }
-            .mobile-btn-height { height: 3rem !important; }
-        }
-
-        @media (max-height: 740px) {
-            .mobile-compact { gap: 0.5rem !important; }
-            .mobile-title { font-size: 2.2rem !important; margin-bottom: 0.5rem !important; }
-            .mobile-logo { width: 3.5rem !important; height: 3.5rem !important; margin-bottom: 1.5rem !important; }
-            .mobile-btn-height { height: 4rem !important; }
-        }
-
-        @media (min-width: 1024px) {
-            .safe-pt { padding-top: 3rem; }
-            .safe-pb { padding-bottom: 3rem; }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        .animate-shake {
-            animation: shake 0.2s ease-in-out 0s 2;
-        }
-
-        .overflow-y-auto {
-            -webkit-overflow-scrolling: touch;
+        * {
+            -webkit-tap-highlight-color: transparent;
+            outline: none !important;
         }
     </style>
 <script type="importmap">
@@ -187,19 +69,11 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="stadium-bg">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
-    <script>
-        // Pokušaj ulaska u Fullscreen na prvi dodir korisnika kako bi se sakrila traka pretraživača
-        document.addEventListener('touchstart', function() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(e => {
-                    console.debug('Fullscreen entry blocked:', e);
-                });
-            }
-        }, { once: true });
-    </script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

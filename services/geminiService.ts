@@ -100,30 +100,42 @@ export const generateQuestions = async (
 
   const targetLang = language === 'Bosanski' ? 'Bosnian' : language === 'Deutsch' ? 'German' : 'English';
   
-  const prompt = `Generate ${count} football trivia questions. 
-  CRITICAL: The entire content (question text, all 4 options, and the explanation) MUST be written in ${targetLang}.
-  Category: ${category}.
-  Difficulty: ${difficulty}/10.
-  Unique IDs to avoid: ${excludeIds.slice(-20).join(', ')}.
-  Output strictly as JSON: [{"id": string, "text": string, "options": [4 strings], "correctAnswer": string, "explanation": string}]`;
+  const systemInstruction = `You are a world-class football (soccer) historian and trivia expert. 
+Your task is to generate high-quality, accurate, and engaging football trivia questions.
+CRITICAL RULES:
+1. The entire content (question text, all 4 options, and the explanation) MUST be written in ${targetLang}.
+2. Ensure the correct answer is exactly one of the options.
+3. The explanation should be informative and provide context about the correct answer.
+4. Avoid repeating questions provided in the exclusion list.
+5. Questions must be relevant to the year 2026 and historical football facts.`;
+
+  const prompt = `Generate ${count} football trivia questions for the category: ${category}.
+Difficulty level: ${difficulty}/10 (1 is very easy, 10 is expert level).
+Exclude these question IDs: ${excludeIds.slice(-20).join(', ')}.
+If the category is 'ALL', provide a balanced mix of players, clubs, stadiums, national teams, and coaches.`;
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
+        systemInstruction,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
           items: {
             type: Type.OBJECT,
             properties: {
-              id: { type: Type.STRING },
-              text: { type: Type.STRING },
-              options: { type: Type.ARRAY, items: { type: Type.STRING } },
-              correctAnswer: { type: Type.STRING },
-              explanation: { type: Type.STRING }
+              id: { type: Type.STRING, description: "A unique string ID for the question" },
+              text: { type: Type.STRING, description: "The trivia question text" },
+              options: { 
+                type: Type.ARRAY, 
+                items: { type: Type.STRING },
+                description: "Exactly 4 multiple choice options"
+              },
+              correctAnswer: { type: Type.STRING, description: "The correct option from the options array" },
+              explanation: { type: Type.STRING, description: "A brief explanation of why the answer is correct" }
             },
             required: ["id", "text", "options", "correctAnswer", "explanation"]
           }
@@ -132,17 +144,16 @@ export const generateQuestions = async (
     });
 
     const resultText = response.text;
-    if (!resultText) throw new Error("Empty response");
+    if (!resultText) throw new Error("Empty response from Gemini API");
     
-    const cleanJson = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(cleanJson);
+    const parsed = JSON.parse(resultText);
 
     return {
       isOffline: false,
       questions: parsed.map((q: any) => ({
         ...q,
         id: q.id || `ai-${Date.now()}-${Math.random()}`,
-        category: category,
+        category: category === Category.ALL ? (q.category || category) : category,
         difficulty: difficulty
       }))
     };

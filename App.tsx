@@ -6,7 +6,7 @@ import { generateQuestions } from './services/geminiService';
 import { audioService } from './services/audioService';
 import QuizCard from './components/QuizCard';
 
-const VERSION = "1.4.5";
+const VERSION = "1.4.7";
 
 const INITIAL_LEVELS: LevelConfig[] = [
   { id: 1, name: { Bosanski: "Početnik", English: "Beginner", Deutsch: "Anfänger" }, minDifficulty: 1, maxDifficulty: 3, questionsPerLevel: 20, unlocked: true },
@@ -454,14 +454,19 @@ const App: React.FC = () => {
   };
 
   const handleQuitToSplash = () => {
-    // Uklonjena potvrda (window.confirm) radi direktnog izlaska
     audioService.playSfx('exit', 0.6, true);
-    setGameState(prev => ({ ...prev, nickname: '', score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
-    setStep('SPLASH');
-    setQuestions([]);
-    setCurrentQuestionIndex(0);
-    setStreak(0);
-    setIsPaused(false);
+    if (window.confirm(t('quitConfirm'))) {
+      // Attempt to close the window (works in some PWA/mobile contexts)
+      window.close();
+      
+      // Fallback if window.close() is blocked by browser
+      setGameState(prev => ({ ...prev, nickname: '', score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
+      setStep('SPLASH');
+      setQuestions([]);
+      setCurrentQuestionIndex(0);
+      setStreak(0);
+      setIsPaused(false);
+    }
   };
 
   const resetAllProgress = () => {
@@ -510,10 +515,10 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 flex-1 flex flex-col h-full">
+      <div className="relative z-10 flex-1 flex flex-col h-full overflow-hidden">
         <AnimatePresence mode="wait">
           {step === 'HOME' ? (
-            <motion.div key="landing" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 safe-pt safe-pb">
+            <motion.div key="landing" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center justify-center p-4 md:p-8">
               <div className="mb-4 md:mb-10 flex flex-col items-center w-full max-w-md">
                 <div className="flex gap-2 bg-white/5 backdrop-blur-xl p-1 rounded-full border border-white/10 mb-6 scale-90 md:scale-100">
                   {(Object.keys(LANGUAGE_FLAGS) as Language[]).map(lang => (
@@ -541,7 +546,7 @@ const App: React.FC = () => {
               </div>
             </motion.div>
           ) : step === 'LEVEL_SELECT' ? (
-            <motion.div key="level-select" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
+            <motion.div key="level-select" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center p-4 md:p-8 overflow-y-auto custom-scrollbar">
               <h2 className="text-xl md:text-4xl font-black uppercase tracking-tighter my-6 md:my-8">{t('pickLevel')}</h2>
               <div className="w-full max-w-sm space-y-2 md:space-y-4 mb-10">
                 {levels.map(level => {
@@ -562,7 +567,7 @@ const App: React.FC = () => {
               <button onClick={() => { audioService.playSfx('exit', 0.5, true); setStep('HOME'); }} className="mt-auto mb-4 text-[10px] md:text-xs font-black text-white/30 uppercase tracking-[0.4em] py-3 px-8 active:text-white">{t('back')}</button>
             </motion.div>
           ) : step === 'NICKNAME_INPUT' ? (
-            <motion.div key="nick" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center justify-center p-4 safe-pt safe-pb">
+            <motion.div key="nick" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center justify-center p-4">
               <div className="bg-black/60 backdrop-blur-2xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border border-white/10 w-full max-w-[340px] text-center shadow-2xl">
                 <h2 className="text-xl md:text-3xl font-black mb-6 md:mb-8 uppercase tracking-tighter">{t('enterNickname')}</h2>
                 <input type="text" value={gameState.nickname} placeholder="Messi10..." onChange={(e) => setGameState(p => ({...p, nickname: e.target.value.substring(0, 15)}))} className="w-full h-14 md:h-20 bg-white/5 border border-white/10 rounded-xl md:rounded-3xl px-6 text-white text-lg md:text-xl font-bold mb-6 md:mb-8 focus:outline-none focus:border-emerald-500 text-center placeholder:text-white/10" />
@@ -570,7 +575,7 @@ const App: React.FC = () => {
               </div>
             </motion.div>
           ) : step === 'CATEGORY_SELECT' ? (
-            <motion.div key="cat" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center p-4 md:p-8 safe-pt safe-pb overflow-y-auto custom-scrollbar">
+            <motion.div key="cat" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center p-4 md:p-8 overflow-y-auto custom-scrollbar">
                <h2 className="text-xl md:text-4xl font-black my-6 md:my-8 uppercase tracking-tighter text-white/40">{t('selectCategory')}</h2>
                <div className="grid grid-cols-2 gap-3 md:gap-6 w-full max-w-[500px] mb-12 px-2">
                   {Object.values(Category).map((cat, index) => {
@@ -595,12 +600,12 @@ const App: React.FC = () => {
                <button onClick={() => { audioService.playSfx('exit', 0.5, true); setStep('LEVEL_SELECT'); }} className="mt-auto mb-4 text-[10px] md:text-xs font-black text-white/30 uppercase tracking-[0.4em] py-3 px-8 hover:text-white transition-colors">{t('back')}</button>
             </motion.div>
           ) : (
-            <motion.div key="quiz" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col w-full max-w-xl mx-auto safe-pt safe-pb h-full overflow-hidden">
+            <motion.div key="quiz" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col w-full max-w-xl mx-auto h-full overflow-hidden">
               {gameState.isGameOver ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-4">
                   <div className={`bg-black/90 backdrop-blur-3xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border ${accuracyPercent >= 80 ? 'border-emerald-500/40 shadow-[0_0_80px_rgba(16,185,129,0.15)]' : 'border-rose-500/40 shadow-[0_0_80px_rgba(244,63,94,0.15)]'} text-center w-full max-w-[360px] shadow-2xl relative overflow-hidden`}>
                     <motion.img initial={{ scale: 0 }} animate={{ scale: 1 }} src={GAME_LOGO} className="w-10 h-10 md:w-16 mx-auto mb-4 md:mb-6" />
-                    <h1 className={`text-2xl md:text-5xl font-black mb-4 md:mb-6 uppercase tracking-tighter leading-none ${accuracyPercent >= 80 ? 'text-emerald-400' : 'text-rose-500'}`}>{accuracyPercent >= 80 ? t('success') : t('gameOver')}</h1>
+                    <h1 className={`text-2xl md:text-5xl font-black mb-4 md:mb-6 uppercase tracking-tighter leading-none ${accuracyPercent >= 80 ? t('success') : t('gameOver')}`}>{accuracyPercent >= 80 ? t('success') : t('gameOver')}</h1>
                     <div className="grid grid-cols-2 gap-2 md:gap-3 mb-6 md:mb-10 text-white">
                       <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('totalScoreLabel')}</span><p className="text-xl md:text-2xl font-black">{gameState.score}</p></div>
                       <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('accuracyLabel')}</span><p className={`text-xl md:text-2xl font-black ${accuracyPercent > 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{accuracyPercent}%</p></div>
@@ -660,7 +665,7 @@ const App: React.FC = () => {
       </AnimatePresence>
       <AnimatePresence>
         {showLeaderboard && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 safe-pt safe-pb" onClick={() => setShowLeaderboard(false)}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4" onClick={() => setShowLeaderboard(false)}>
             <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-black/60 border border-white/10 w-full max-w-[340px] rounded-[2rem] p-6 max-h-[85vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
               <h3 className="text-center text-white font-black text-lg uppercase mb-6 tracking-tighter">{t('leaderboard')}</h3>
               <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar mb-6 space-y-2">
@@ -687,7 +692,7 @@ const App: React.FC = () => {
       </AnimatePresence>
       <AnimatePresence>
         {showTrophyRoom && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 safe-pt safe-pb" onClick={() => setShowTrophyRoom(false)}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4" onClick={() => setShowTrophyRoom(false)}>
             <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-black/60 border border-yellow-500/20 w-full max-w-[380px] rounded-[2rem] p-5 md:p-8 max-h-[85vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="text-center mb-6 shrink-0"><span className="text-3xl block mb-1">🏆</span><h3 className="text-white font-black text-lg uppercase tracking-tighter">{t('trophyRoom')}</h3></div>
               <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar mb-6">
@@ -712,7 +717,7 @@ const App: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <footer className="relative z-10 py-4 text-center mt-auto safe-pb shrink-0">
+      <footer className="relative z-10 py-4 text-center mt-auto shrink-0">
         <p className="text-[7px] font-black text-white/10 uppercase tracking-[0.4em] mb-0.5">TAP FOOTBALL QUIZ 2026</p>
         <p className="text-[6px] font-medium text-white/5 uppercase tracking-widest">© 2026 tapfootball@gmail.com</p>
       </footer>

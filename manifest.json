@@ -2,16 +2,15 @@
 {
   "name": "TAP FOOTBALL QUIZ 2026",
   "short_name": "TapFootball",
-  "description": "Vrhunski fudbalski kviz 2026. Testirajte svoje znanje uz AI generisana pitanja. Igrajte offline, osvajajte trofeje i postanite legenda fudbala!",
+  "description": "Vrhunski fudbalski kviz 2026.",
   "id": "com.tapfootball.quiz2026",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/index.html",
+  "scope": "/",
   "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone", "window-controls-overlay" ],
   "background_color": "#051622",
-  "theme_color": "#10b981",
+  "theme_color": "#051622",
   "orientation": "portrait",
-  "categories": ["games", "sports", "education"],
+  "categories": ["games", "sports"],
   "lang": "bs-BA",
   "dir": "ltr",
   "prefer_related_applications": false,
@@ -33,22 +32,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&q=80&w=1080",
-      "sizes": "1080x1920",
-      "type": "image/jpeg",
-      "form_factor": "narrow",
-      "label": "Glavni ekran igre"
-    },
-    {
-      "src": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1920",
-      "sizes": "1920x1080",
-      "type": "image/jpeg",
-      "form_factor": "wide",
-      "label": "Desktop prikaz"
     }
   ]
 }
