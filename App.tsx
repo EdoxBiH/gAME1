@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { Category, Question, GameState, LevelConfig, Language, LeaderboardEntry, Achievement, UserStats } from './types';
+import { Category, Question, GameState, LevelConfig, Language, LeaderboardEntry, Achievement, UserStats, DailyChallenge } from './types';
 import { generateQuestions } from './services/geminiService';
 import { audioService } from './services/audioService';
 import QuizCard from './components/QuizCard';
@@ -70,7 +70,57 @@ const TRANSLATIONS = {
   questionLabel: { Bosanski: "PIT", English: "Q", Deutsch: "FR" },
   completedBadge: { Bosanski: "ZAVRŠENO", English: "COMPLETED", Deutsch: "ERLEDIGT" },
   unlockedBadge: { Bosanski: "OTKLJUČANO", English: "UNLOCKED", Deutsch: "FREIGESCHALTET" },
-  quitLabel: { Bosanski: "IZLAZ", English: "EXIT", Deutsch: "ENDE" }
+  quitLabel: { Bosanski: "IZLAZ", English: "EXIT", Deutsch: "ENDE" },
+  dailyChallenge: { Bosanski: "DNEVNI IZAZOV", English: "DAILY CHALLENGE", Deutsch: "TÄGLICHE HERAUSFORDERUNG" },
+  challengeCompleted: { Bosanski: "IZAZOV ZAVRŠEN!", English: "CHALLENGE COMPLETED!", Deutsch: "HERAUSFORDERUNG ABGESCHLOSSEN!" },
+  bonusPoints: { Bosanski: "+{points} BONUS BODOVA", English: "+{points} BONUS POINTS", Deutsch: "+{points} BONUSPUNKTE" },
+  completeTask: { Bosanski: "Ispunite zadatak za bonus", English: "Complete task for bonus", Deutsch: "Aufgabe für Bonus erfüllen" }
+};
+
+const DAILY_CHALLENGES: DailyChallenge[] = [
+  {
+    id: 'streak_5',
+    type: 'streak',
+    requirement: 5,
+    rewardPoints: 500,
+    name: { Bosanski: "Niz od 5", English: "Streak of 5", Deutsch: "5er Serie" },
+    description: { Bosanski: "Ostvari niz od 5 tačnih odgovora", English: "Get a streak of 5 correct answers", Deutsch: "Erreiche eine 5er Serie richtiger Antworten" }
+  },
+  {
+    id: 'correct_15',
+    type: 'correct_answers',
+    requirement: 15,
+    rewardPoints: 1000,
+    name: { Bosanski: "15 Tačnih", English: "15 Correct", Deutsch: "15 Richtig" },
+    description: { Bosanski: "Odgovori na 15 pitanja tačno u jednoj igri", English: "Answer 15 questions correctly in one game", Deutsch: "Beantworte 15 Fragen richtig in einem Spiel" }
+  },
+  {
+    id: 'perfect_game',
+    type: 'perfect_game',
+    requirement: 1,
+    rewardPoints: 2000,
+    name: { Bosanski: "Savršena Igra", English: "Perfect Game", Deutsch: "Perfektes Spiel" },
+    description: { Bosanski: "Završi nivo bez ijedne greške", English: "Complete a level with zero mistakes", Deutsch: "Beende ein Level ohne Fehler" }
+  },
+  {
+    id: 'players_master',
+    type: 'category_mastery',
+    category: Category.PLAYERS,
+    requirement: 10,
+    rewardPoints: 800,
+    name: { Bosanski: "Gospodar Igrača", English: "Player Master", Deutsch: "Spieler-Meister" },
+    description: { Bosanski: "10 tačnih odgovora u kategoriji Igrači", English: "10 correct answers in Players category", Deutsch: "10 richtige Antworten in der Kategorie Spieler" }
+  }
+];
+
+const getDailyChallenge = () => {
+  const today = new Date().toISOString().split('T')[0];
+  let hash = 0;
+  for (let i = 0; i < today.length; i++) {
+    hash = today.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % DAILY_CHALLENGES.length;
+  return { ...DAILY_CHALLENGES[index], date: today };
 };
 
 const CATEGORY_VISUALS: Record<Category, { icon: string }> = {
@@ -228,7 +278,7 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : { 
       totalPoints: 0, totalCorrect: 0, totalAnswered: 0, maxStreak: 0, 
       levelsCompleted: [], unlockedAchievements: [], categoryCorrect: {},
-      completedLevelCategories: {} 
+      completedLevelCategories: {}, dailyChallengesCompleted: 0
     };
   });
 
@@ -280,6 +330,12 @@ const App: React.FC = () => {
   const [showTrophyRoom, setShowTrophyRoom] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [unlockedToast, setUnlockedToast] = useState<Achievement | null>(null);
+  const [dailyChallenge] = useState(() => getDailyChallenge());
+  const [isDailyChallengeCompletedToday, setIsDailyChallengeCompletedToday] = useState(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return userStats.lastDailyChallengeDate === today;
+  });
+  const [showDailyChallengeToast, setShowDailyChallengeToast] = useState(false);
   
   const [streak, setStreak] = useState(0);
   const [step, setStep] = useState<'SPLASH' | 'HOME' | 'LEVEL_SELECT' | 'NICKNAME_INPUT' | 'CATEGORY_SELECT' | 'QUIZ'>('SPLASH');
@@ -395,7 +451,37 @@ const App: React.FC = () => {
         [currentQ.category]: (userStats.categoryCorrect[currentQ.category] || 0) + (isCorrect ? 1 : 0) 
       }
     };
+
+    // Check Daily Challenge
+    if (!isDailyChallengeCompletedToday) {
+      let challengeMet = false;
+      if (dailyChallenge.type === 'streak' && newStreak >= dailyChallenge.requirement) challengeMet = true;
+      if (dailyChallenge.type === 'correct_answers' && (gameState.correctAnswers + (isCorrect ? 1 : 0)) >= dailyChallenge.requirement) challengeMet = true;
+      if (dailyChallenge.type === 'category_mastery' && currentQ.category === dailyChallenge.category && isCorrect) {
+        const sessionCategoryCorrect = gameState.history.filter(h => {
+          const q = questions.find(q => q.id === h.questionId);
+          return q && q.category === dailyChallenge.category && h.isCorrect;
+        }).length + (isCorrect ? 1 : 0);
+        if (sessionCategoryCorrect >= dailyChallenge.requirement) challengeMet = true;
+      }
+      if (dailyChallenge.type === 'perfect_game' && isOver && totalMistakes === 0 && totalAnswered >= 20) challengeMet = true;
+
+      if (challengeMet) {
+        setIsDailyChallengeCompletedToday(true);
+        setShowDailyChallengeToast(true);
+        audioService.playSfx('success', 1, true);
+        
+        const today = new Date().toISOString().split('T')[0];
+        updatedStats.lastDailyChallengeDate = today;
+        updatedStats.dailyChallengesCompleted += 1;
+        updatedStats.totalPoints += dailyChallenge.rewardPoints;
+        
+        setTimeout(() => setShowDailyChallengeToast(false), 5000);
+      }
+    }
     
+    setUserStats(updatedStats);
+
     if (isOver) {
       if (totalAnswered >= 20 && totalMistakes < 5) {
         const currentLevelCats = updatedStats.completedLevelCategories[gameState.currentLevel] || [];
@@ -475,7 +561,7 @@ const App: React.FC = () => {
       const initialStats: UserStats = { 
         totalPoints: 0, totalCorrect: 0, totalAnswered: 0, maxStreak: 0, 
         levelsCompleted: [], unlockedAchievements: [], categoryCorrect: {},
-        completedLevelCategories: {} 
+        completedLevelCategories: {}, dailyChallengesCompleted: 0
       };
       setUserStats(initialStats);
       setLevels(INITIAL_LEVELS);
@@ -501,6 +587,24 @@ const App: React.FC = () => {
     <div className="flex-1 flex flex-col h-full grass-pattern relative overflow-hidden" onClick={handleInteraction}>
       <StadiumAtmosphere />
       <AnimatePresence>{step === 'SPLASH' && <SplashScreen key="splash" />}</AnimatePresence>
+      <AnimatePresence>
+        {showDailyChallengeToast && (
+          <motion.div 
+            initial={{ y: -100, opacity: 0 }} 
+            animate={{ y: 20, opacity: 1 }} 
+            exit={{ y: -100, opacity: 0 }} 
+            className="fixed top-0 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-sm"
+          >
+            <div className="bg-emerald-500 p-4 rounded-2xl shadow-[0_20px_50px_rgba(16,185,129,0.4)] flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl">🌟</div>
+              <div>
+                <h4 className="text-white font-black text-xs tracking-widest uppercase">{t('challengeCompleted')}</h4>
+                <p className="text-white/80 text-[10px] font-bold">{t('bonusPoints').replace('{points}', dailyChallenge.rewardPoints.toString())}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {unlockedToast && (
           <motion.div initial={{ y: -100, opacity: 0 }} animate={{ y: 20, opacity: 1 }} exit={{ y: -100, opacity: 0 }} className="fixed top-0 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-sm pointer-events-none">
@@ -529,6 +633,36 @@ const App: React.FC = () => {
                 <motion.h1 className="mobile-title text-4xl md:text-7xl font-black tracking-tighter uppercase leading-[0.9] text-center mb-1 drop-shadow-2xl">TAP FOOTBALL<br/><span className="text-emerald-500">2026</span></motion.h1>
                 <motion.p className="text-[9px] md:text-xs font-bold text-white/30 tracking-[0.2em] uppercase text-center">{t('subTitle')}</motion.p>
               </div>
+
+              {/* Daily Challenge Card */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-[300px] md:max-w-[340px] mb-6 p-4 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-emerald-500 tracking-widest uppercase">{t('dailyChallenge')}</span>
+                  {isDailyChallengeCompletedToday && (
+                    <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/20 px-2 py-0.5 rounded-full">✓</span>
+                  )}
+                </div>
+                <h3 className="text-sm font-bold text-white mb-1">{dailyChallenge.name[gameState.language]}</h3>
+                <p className="text-[10px] text-white/50 leading-relaxed mb-3">{dailyChallenge.description[gameState.language]}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-yellow-500">+{dailyChallenge.rewardPoints} PTS</span>
+                  {!isDailyChallengeCompletedToday && (
+                    <span className="text-[9px] text-white/30 italic">{t('completeTask')}</span>
+                  )}
+                </div>
+                {isDailyChallengeCompletedToday && (
+                  <div className="absolute inset-0 bg-emerald-500/5 backdrop-blur-[1px] flex items-center justify-center">
+                    <div className="rotate-[-12deg] border-2 border-emerald-500/40 px-4 py-1 rounded-lg">
+                      <span className="text-emerald-500/60 font-black text-xs tracking-widest uppercase">{t('completedBadge')}</span>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+
               <div className="w-full max-w-[300px] md:max-w-[340px] space-y-2 md:space-y-4 mobile-compact text-center">
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => { handleInteraction(); audioService.playSfx('playAgain', 0.5, true); setStep('LEVEL_SELECT'); }} className="mobile-btn-height w-full h-14 md:h-20 bg-emerald-500 text-white font-black rounded-2xl md:rounded-3xl shadow-[0_15px_40px_rgba(16,185,129,0.3)] uppercase text-sm md:text-base tracking-[0.2em] btn-glow">{t('startGame')}</motion.button>
                 <div className="grid grid-cols-2 gap-2 md:gap-3">

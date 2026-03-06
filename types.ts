@@ -73,4 +73,16 @@ export interface UserStats {
   unlockedAchievements: string[];
   categoryCorrect: Record<string, number>;
   completedLevelCategories: Record<number, Category[]>;
+  lastDailyChallengeDate?: string;
+  dailyChallengesCompleted: number;
+}
+
+export interface DailyChallenge {
+  id: string;
+  type: 'streak' | 'correct_answers' | 'category_mastery' | 'perfect_game';
+  requirement: number;
+  category?: Category;
+  rewardPoints: number;
+  name: Record<Language, string>;
+  description: Record<Language, string>;
 }
