@@ -6,7 +6,8 @@ const SFX_URLS = {
   timesUp: 'https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3',   // Alarm
   playAgain: 'https://assets.mixkit.co/active_storage/sfx/2021/2021-preview.mp3', // High energy transition
   exit: 'https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3',      // Neutral pop
-  click: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'     // Snappy UI click
+  click: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',     // Snappy UI click
+  success: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'    // Success fanfare
 };
 
 type SfxType = keyof typeof SFX_URLS;
@@ -19,9 +20,13 @@ class AudioService {
   constructor() {
     if (typeof window !== 'undefined') {
       Object.entries(SFX_URLS).forEach(([key, url]) => {
-        const audio = new Audio(url);
-        audio.addEventListener('ended', () => this.activeSounds.delete(audio));
-        this.sfx[key] = audio;
+        try {
+          const audio = new Audio(url);
+          audio.addEventListener('ended', () => this.activeSounds.delete(audio));
+          this.sfx[key] = audio;
+        } catch (e) {
+          console.error(`Failed to load audio for ${key}:`, e);
+        }
       });
     }
   }

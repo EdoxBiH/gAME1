@@ -66,6 +66,12 @@ const TRANSLATIONS = {
   categoriesDone: { Bosanski: "Kategorije: {done}/6", English: "Categories: {done}/6", Deutsch: "Kategorien: {done}/6" },
   youBadge: { Bosanski: "TI", English: "YOU", Deutsch: "DU" },
   loadMore: { Bosanski: "UČITAJ VIŠE", English: "LOAD MORE", Deutsch: "MEHR LADEN" },
+  privacyTitle: { Bosanski: "PRIVATNOST", English: "PRIVACY", Deutsch: "DATENSCHUTZ" },
+  privacyInfo: { 
+    Bosanski: "Svi vaši podaci (nadimak, rezultati, nivoi) se čuvaju isključivo lokalno na vašem uređaju. Ne prikupljamo nikakve lične podatke.", 
+    English: "All your data (nickname, scores, levels) is stored exclusively locally on your device. We do not collect any personal data.", 
+    Deutsch: "Alle Ihre Daten (Name, Ergebnisse, Level) werden ausschließlich lokal auf Ihrem Gerät gespeichert. Wir sammeln keine persönlichen Daten." 
+  },
   lvl: { Bosanski: "NIVO", English: "LVL", Deutsch: "STUFE" },
   questionLabel: { Bosanski: "PIT", English: "Q", Deutsch: "FR" },
   completedBadge: { Bosanski: "ZAVRŠENO", English: "COMPLETED", Deutsch: "ERLEDIGT" },
@@ -162,6 +168,82 @@ const CATEGORY_TRANSLATIONS: Record<Category, Record<Language, string>> = {
 };
 
 const GAME_LOGO = "https://i.imgur.com/EgHOWpF.png";
+
+const PROFANITY_LIST = ['fuck', 'shit', 'ass', 'bitch', 'cunt', 'dick', 'pussy', 'nazi', 'hitler', 'sex', 'porn'];
+
+const filterProfanity = (text: string) => {
+  let filtered = text;
+  PROFANITY_LIST.forEach(word => {
+    const regex = new RegExp(word, 'gi');
+    filtered = filtered.replace(regex, '***');
+  });
+  return filtered;
+};
+
+const Modal: React.FC<{ 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  title: string; 
+  message: string; 
+  confirmText?: string; 
+  cancelText?: string;
+  isParentalGate?: boolean;
+}> = ({ isOpen, onClose, onConfirm, title, message, confirmText = "OK", cancelText = "BACK", isParentalGate }) => {
+  const [gateAnswer, setGateAnswer] = useState('');
+  const [gateQuestion, setGateQuestion] = useState({ a: 0, b: 0, sum: 0 });
+
+  useEffect(() => {
+    if (isOpen && isParentalGate) {
+      const a = Math.floor(Math.random() * 10) + 1;
+      const b = Math.floor(Math.random() * 10) + 1;
+      setGateQuestion({ a, b, sum: a + b });
+      setGateAnswer('');
+    }
+  }, [isOpen, isParentalGate]);
+
+  if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    if (isParentalGate) {
+      if (parseInt(gateAnswer) === gateQuestion.sum) {
+        onConfirm();
+      } else {
+        audioService.playSfx('wrong', 0.5);
+        onClose();
+      }
+    } else {
+      onConfirm();
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
+      <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-zinc-900 border border-white/10 w-full max-w-[340px] rounded-[2.5rem] p-8 text-center shadow-2xl">
+        <h3 className="text-xl font-black uppercase mb-4 tracking-tighter text-white">{title}</h3>
+        <p className="text-sm text-white/60 mb-8 leading-relaxed">{message}</p>
+        
+        {isParentalGate && (
+          <div className="mb-8">
+            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-4">Parental Gate: {gateQuestion.a} + {gateQuestion.b} = ?</p>
+            <input 
+              type="number" 
+              value={gateAnswer} 
+              onChange={(e) => setGateAnswer(e.target.value)} 
+              className="w-full h-12 bg-white/5 border border-white/10 rounded-xl text-center text-white font-bold focus:border-emerald-500 outline-none"
+              placeholder="Answer"
+            />
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <button onClick={handleConfirm} className="w-full h-14 bg-emerald-500 text-white font-black rounded-xl uppercase text-xs tracking-widest shadow-lg shadow-emerald-500/20">{confirmText}</button>
+          <button onClick={onClose} className="w-full h-12 bg-white/5 text-white/40 font-black rounded-xl uppercase text-[10px] tracking-widest">{cancelText}</button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 const StadiumAtmosphere: React.FC = () => {
   return (
@@ -263,64 +345,142 @@ const SplashScreen: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const [isMuted, setIsMuted] = useState<boolean>(() => JSON.parse(localStorage.getItem('quiz_muted') || 'false'));
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('quiz_muted') || 'false');
+    } catch {
+      return false;
+    }
+  });
   const [levels, setLevels] = useState<LevelConfig[]>(() => {
-    const saved = localStorage.getItem('quiz_levels');
-    return saved ? JSON.parse(saved) : INITIAL_LEVELS;
+    try {
+      const saved = localStorage.getItem('quiz_levels');
+      const parsed = saved ? JSON.parse(saved) : INITIAL_LEVELS;
+      return Array.isArray(parsed) ? parsed : INITIAL_LEVELS;
+    } catch {
+      return INITIAL_LEVELS;
+    }
   });
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(() => {
-    const saved = localStorage.getItem('quiz_leaderboard');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('quiz_leaderboard');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   });
   const [visibleLeaderboardCount, setVisibleLeaderboardCount] = useState(10);
   const [userStats, setUserStats] = useState<UserStats>(() => {
-    const saved = localStorage.getItem('quiz_user_stats');
-    return saved ? JSON.parse(saved) : { 
+    const defaultStats: UserStats = { 
       totalPoints: 0, totalCorrect: 0, totalAnswered: 0, maxStreak: 0, 
       levelsCompleted: [], unlockedAchievements: [], categoryCorrect: {},
       completedLevelCategories: {}, dailyChallengesCompleted: 0
     };
+    try {
+      const saved = localStorage.getItem('quiz_user_stats');
+      if (!saved) return defaultStats;
+      const parsed = JSON.parse(saved);
+      return { ...defaultStats, ...parsed };
+    } catch {
+      return defaultStats;
+    }
   });
 
   const [gameState, setGameState] = useState<GameState>(() => {
-    const savedLang = localStorage.getItem('quiz_language') as Language;
-    return {
-      nickname: localStorage.getItem('quiz_nickname') || '',
-      currentLevel: 1,
-      selectedCategory: Category.ALL,
-      score: 0,
-      questionsAnswered: 0,
-      correctAnswers: 0,
-      mistakes: 0,
-      isGameOver: false,
-      language: (['Bosanski', 'English', 'Deutsch'].includes(savedLang) ? savedLang : 'English') as Language,
-      history: [],
-    };
+    try {
+      const savedLang = localStorage.getItem('quiz_language') as Language;
+      return {
+        nickname: localStorage.getItem('quiz_nickname') || '',
+        currentLevel: 1,
+        selectedCategory: Category.ALL,
+        score: 0,
+        questionsAnswered: 0,
+        correctAnswers: 0,
+        mistakes: 0,
+        isGameOver: false,
+        language: (['Bosanski', 'English', 'Deutsch'].includes(savedLang) ? savedLang : 'English') as Language,
+        history: [],
+      };
+    } catch {
+      return {
+        nickname: '',
+        currentLevel: 1,
+        selectedCategory: Category.ALL,
+        score: 0,
+        questionsAnswered: 0,
+        correctAnswers: 0,
+        mistakes: 0,
+        isGameOver: false,
+        language: 'English',
+        history: [],
+      };
+    }
+  });
+
+  const [modalConfig, setModalConfig] = useState<{ 
+    isOpen: boolean; 
+    title: string; 
+    message: string; 
+    onConfirm: () => void; 
+    isParentalGate?: boolean;
+    confirmText?: string;
+    cancelText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    isParentalGate: false
   });
 
   useEffect(() => {
-    localStorage.setItem('quiz_muted', JSON.stringify(isMuted));
+    try {
+      localStorage.setItem('quiz_muted', JSON.stringify(isMuted));
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
     audioService.setMute(isMuted);
   }, [isMuted]);
 
   useEffect(() => {
-    localStorage.setItem('quiz_user_stats', JSON.stringify(userStats));
+    try {
+      localStorage.setItem('quiz_user_stats', JSON.stringify(userStats));
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
   }, [userStats]);
 
   useEffect(() => {
-    localStorage.setItem('quiz_levels', JSON.stringify(levels));
+    try {
+      localStorage.setItem('quiz_levels', JSON.stringify(levels));
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
   }, [levels]);
 
   useEffect(() => {
-    localStorage.setItem('quiz_nickname', gameState.nickname);
+    try {
+      localStorage.setItem('quiz_nickname', gameState.nickname);
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
   }, [gameState.nickname]);
 
   useEffect(() => {
-    localStorage.setItem('quiz_language', gameState.language);
+    try {
+      localStorage.setItem('quiz_language', gameState.language);
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
   }, [gameState.language]);
 
   useEffect(() => {
-    localStorage.setItem('quiz_leaderboard', JSON.stringify(leaderboard));
+    try {
+      localStorage.setItem('quiz_leaderboard', JSON.stringify(leaderboard));
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
   }, [leaderboard]);
 
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -341,6 +501,31 @@ const App: React.FC = () => {
   const [step, setStep] = useState<'SPLASH' | 'HOME' | 'LEVEL_SELECT' | 'NICKNAME_INPUT' | 'CATEGORY_SELECT' | 'QUIZ'>('SPLASH');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const handleShare = () => {
+    const text = t('shareText')
+      .replace('{score}', gameState.score.toString())
+      .replace('{accuracy}', accuracyPercent.toString());
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'TAP FOOTBALL 2026',
+        text: text,
+        url: window.location.href
+      }).catch(() => {
+        navigator.clipboard.writeText(text);
+        setShowCopiedToast(true);
+        setTimeout(() => setShowCopiedToast(false), 2000);
+      });
+    } else {
+      navigator.clipboard.writeText(text);
+      setShowCopiedToast(true);
+      setTimeout(() => setShowCopiedToast(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (step === 'SPLASH') {
@@ -379,9 +564,14 @@ const App: React.FC = () => {
       );
 
       const result = await generateQuestions(category, dynamicDiff, lang, 5, history);
-      if (result.questions.length > 0) setQuestions(prev => [...prev, ...result.questions]);
+      if (result.questions.length > 0) {
+        setQuestions(prev => [...prev, ...result.questions]);
+        setFetchError(null);
+      }
     } catch (error) {
       console.error("fetchBatch failed:", error);
+      setFetchError("AI connection issue. Using local backup...");
+      setTimeout(() => setFetchError(null), 3000);
     } finally {
       setLoading(false);
       fetchingRef.current = false;
@@ -406,127 +596,144 @@ const App: React.FC = () => {
   };
 
   const checkAchievements = useCallback((stats: UserStats, currentStreak: number, currentScore: number, isPerfect: boolean) => {
+    if (!stats || !stats.unlockedAchievements) return [];
     const newUnlocks: string[] = [];
     ACHIEVEMENTS.forEach(ach => {
       if (stats.unlockedAchievements.includes(ach.id)) return;
       let condition = false;
-      if (ach.type === 'total_correct') condition = stats.totalCorrect >= ach.requirement;
-      if (ach.type === 'streak') condition = currentStreak >= ach.requirement;
-      if (ach.type === 'perfect_game') condition = isPerfect;
-      if (ach.type === 'high_score') condition = currentScore >= ach.requirement;
-      if (ach.type === 'category_mastery' && ach.category) condition = (stats.categoryCorrect[ach.category] || 0) >= ach.requirement;
+      try {
+        if (ach.type === 'total_correct') condition = stats.totalCorrect >= ach.requirement;
+        if (ach.type === 'streak') condition = currentStreak >= ach.requirement;
+        if (ach.type === 'perfect_game') condition = isPerfect;
+        if (ach.type === 'high_score') condition = currentScore >= ach.requirement;
+        if (ach.type === 'category_mastery' && ach.category) {
+          condition = (stats.categoryCorrect?.[ach.category] || 0) >= ach.requirement;
+        }
+      } catch (e) {
+        console.error('Achievement check failed', e);
+      }
 
       if (condition) {
         newUnlocks.push(ach.id);
         setUnlockedToast(ach);
-        audioService.playSfx('correct', 1, true);
+        audioService.playSfx('success', 0.5);
         setTimeout(() => setUnlockedToast(null), 4000);
       }
     });
     return newUnlocks;
-  }, []);
+  }, [gameState.language]);
 
   const handleAnswer = (answer: string) => {
     if (isPaused) return;
-    const currentQ = questions[currentQuestionIndex];
-    if (!currentQ) return;
-    
-    const isCorrect = answer === currentQ.correctAnswer;
-    const newStreak = isCorrect ? streak + 1 : 0;
-    const points = isCorrect ? Math.round((currentQ.difficulty || 1) * 10 * (1 + Math.floor(newStreak / 5) * 0.5)) : 0;
-    
-    const totalMistakes = isCorrect ? gameState.mistakes : gameState.mistakes + 1;
-    const totalAnswered = gameState.questionsAnswered + 1;
-    const isOver = totalAnswered >= 20 || totalMistakes >= 5;
-    const finalScore = gameState.score + points;
+    try {
+      const currentQ = questions[currentQuestionIndex];
+      if (!currentQ) return;
+      
+      const isCorrect = answer === currentQ.correctAnswer;
+      const newStreak = isCorrect ? streak + 1 : 0;
+      const points = isCorrect ? Math.round((currentQ.difficulty || 1) * 10 * (1 + Math.floor(newStreak / 5) * 0.5)) : 0;
+      
+      const totalMistakes = isCorrect ? (gameState.mistakes || 0) : (gameState.mistakes || 0) + 1;
+      const totalAnswered = (gameState.questionsAnswered || 0) + 1;
+      const isOver = totalAnswered >= 20 || totalMistakes >= 5;
+      const finalScore = (gameState.score || 0) + points;
 
-    const updatedStats: UserStats = {
-      ...userStats,
-      totalPoints: userStats.totalPoints + points,
-      totalCorrect: isCorrect ? userStats.totalCorrect + 1 : userStats.totalCorrect,
-      totalAnswered: userStats.totalAnswered + 1,
-      maxStreak: Math.max(userStats.maxStreak, newStreak),
-      categoryCorrect: { 
-        ...userStats.categoryCorrect, 
-        [currentQ.category]: (userStats.categoryCorrect[currentQ.category] || 0) + (isCorrect ? 1 : 0) 
-      }
-    };
+      const updatedStats: UserStats = {
+        ...userStats,
+        totalPoints: (userStats.totalPoints || 0) + points,
+        totalCorrect: isCorrect ? (userStats.totalCorrect || 0) + 1 : (userStats.totalCorrect || 0),
+        totalAnswered: (userStats.totalAnswered || 0) + 1,
+        maxStreak: Math.max((userStats.maxStreak || 0), newStreak),
+        categoryCorrect: { 
+          ...(userStats.categoryCorrect || {}), 
+          [currentQ.category]: ((userStats.categoryCorrect?.[currentQ.category]) || 0) + (isCorrect ? 1 : 0) 
+        }
+      };
 
-    // Check Daily Challenge
-    if (!isDailyChallengeCompletedToday) {
-      let challengeMet = false;
-      if (dailyChallenge.type === 'streak' && newStreak >= dailyChallenge.requirement) challengeMet = true;
-      if (dailyChallenge.type === 'correct_answers' && (gameState.correctAnswers + (isCorrect ? 1 : 0)) >= dailyChallenge.requirement) challengeMet = true;
-      if (dailyChallenge.type === 'category_mastery' && currentQ.category === dailyChallenge.category && isCorrect) {
-        const sessionCategoryCorrect = gameState.history.filter(h => {
-          const q = questions.find(q => q.id === h.questionId);
-          return q && q.category === dailyChallenge.category && h.isCorrect;
-        }).length + (isCorrect ? 1 : 0);
-        if (sessionCategoryCorrect >= dailyChallenge.requirement) challengeMet = true;
-      }
-      if (dailyChallenge.type === 'perfect_game' && isOver && totalMistakes === 0 && totalAnswered >= 20) challengeMet = true;
+      // Check Daily Challenge
+      if (!isDailyChallengeCompletedToday && dailyChallenge) {
+        let challengeMet = false;
+        if (dailyChallenge.type === 'streak' && newStreak >= dailyChallenge.requirement) challengeMet = true;
+        if (dailyChallenge.type === 'correct_answers' && ((gameState.correctAnswers || 0) + (isCorrect ? 1 : 0)) >= dailyChallenge.requirement) challengeMet = true;
+        if (dailyChallenge.type === 'category_mastery' && currentQ.category === dailyChallenge.category && isCorrect) {
+          const sessionCategoryCorrect = (gameState.history || []).filter(h => {
+            const q = questions.find(q => q.id === h.questionId);
+            return q && q.category === dailyChallenge.category && h.isCorrect;
+          }).length + (isCorrect ? 1 : 0);
+          if (sessionCategoryCorrect >= dailyChallenge.requirement) challengeMet = true;
+        }
+        if (dailyChallenge.type === 'perfect_game' && isOver && totalMistakes === 0 && totalAnswered >= 20) challengeMet = true;
 
-      if (challengeMet) {
-        setIsDailyChallengeCompletedToday(true);
-        setShowDailyChallengeToast(true);
-        audioService.playSfx('success', 1, true);
-        
-        const today = new Date().toISOString().split('T')[0];
-        updatedStats.lastDailyChallengeDate = today;
-        updatedStats.dailyChallengesCompleted += 1;
-        updatedStats.totalPoints += dailyChallenge.rewardPoints;
-        
-        setTimeout(() => setShowDailyChallengeToast(false), 5000);
-      }
-    }
-    
-    setUserStats(updatedStats);
-
-    if (isOver) {
-      if (totalAnswered >= 20 && totalMistakes < 5) {
-        const currentLevelCats = updatedStats.completedLevelCategories[gameState.currentLevel] || [];
-        if (!currentLevelCats.includes(gameState.selectedCategory)) {
-          const newLevelCats = [...currentLevelCats, gameState.selectedCategory];
-          updatedStats.completedLevelCategories = { 
-            ...updatedStats.completedLevelCategories, 
-            [gameState.currentLevel]: newLevelCats 
-          };
-          if (newLevelCats.length === 6) {
-            updatedStats.levelsCompleted = [...new Set([...updatedStats.levelsCompleted, gameState.currentLevel])];
-            setLevels(prev => prev.map(l => l.id === gameState.currentLevel + 1 ? {...l, unlocked: true} : l));
-          }
+        if (challengeMet) {
+          setIsDailyChallengeCompletedToday(true);
+          setShowDailyChallengeToast(true);
+          audioService.playSfx('success', 1, true);
+          
+          const today = new Date().toISOString().split('T')[0];
+          updatedStats.lastDailyChallengeDate = today;
+          updatedStats.dailyChallengesCompleted = (updatedStats.dailyChallengesCompleted || 0) + 1;
+          updatedStats.totalPoints = (updatedStats.totalPoints || 0) + (dailyChallenge.rewardPoints || 0);
+          
+          setTimeout(() => setShowDailyChallengeToast(false), 5000);
         }
       }
       
-      if (finalScore > 0) {
-        setLeaderboard(prev => {
-          const newList = [
-            ...prev, 
-            { name: gameState.nickname || 'Guest', score: finalScore, country: LANGUAGE_FLAGS[gameState.language], timestamp: Date.now(), isUser: true }
-          ];
-          return newList.sort((a, b) => b.score - a.score).slice(0, 100);
-        });
+      setUserStats(updatedStats);
+
+      if (isOver) {
+        if (totalAnswered >= 20 && totalMistakes < 5) {
+          const currentLevelCats = (updatedStats.completedLevelCategories || {})[gameState.currentLevel] || [];
+          if (!currentLevelCats.includes(gameState.selectedCategory)) {
+            const newLevelCats = [...currentLevelCats, gameState.selectedCategory];
+            updatedStats.completedLevelCategories = { 
+              ...(updatedStats.completedLevelCategories || {}), 
+              [gameState.currentLevel]: newLevelCats 
+            };
+            if (newLevelCats.length === 6) {
+              updatedStats.levelsCompleted = [...new Set([...(updatedStats.levelsCompleted || []), gameState.currentLevel])];
+              setLevels(prev => prev.map(l => l.id === gameState.currentLevel + 1 ? {...l, unlocked: true} : l));
+            }
+          }
+        }
+        
+        if (finalScore > 0) {
+          setLeaderboard(prev => {
+            const newList = [
+              ...(prev || []), 
+              { name: gameState.nickname || 'Guest', score: finalScore, country: LANGUAGE_FLAGS[gameState.language], timestamp: Date.now(), isUser: true }
+            ];
+            return newList.sort((a, b) => b.score - a.score).slice(0, 100);
+          });
+        }
+      }
+
+      const isPerfect = isOver && totalMistakes === 0 && totalAnswered >= 20;
+      const newUnlocks = checkAchievements(updatedStats, newStreak, finalScore, isPerfect);
+      if (newUnlocks.length > 0) {
+        updatedStats.unlockedAchievements = [...new Set([...(updatedStats.unlockedAchievements || []), ...newUnlocks])];
+      }
+      
+      setUserStats(updatedStats);
+      setGameState(prev => ({ 
+        ...prev, 
+        score: finalScore, 
+        questionsAnswered: totalAnswered, 
+        correctAnswers: isCorrect ? (prev.correctAnswers || 0) + 1 : (prev.correctAnswers || 0), 
+        mistakes: totalMistakes, 
+        isGameOver: isOver, 
+        history: [...(prev.history || []), { questionId: currentQ.id, isCorrect }] 
+      }));
+      setStreak(newStreak);
+      if (!isOver) setCurrentQuestionIndex(prev => prev + 1);
+    } catch (error) {
+      console.error("Error in handleAnswer:", error);
+      // Attempt to recover by moving to next question if possible
+      if (currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex(prev => prev + 1);
+      } else {
+        setGameState(prev => ({ ...prev, isGameOver: true }));
       }
     }
-
-    const isPerfect = isOver && totalMistakes === 0 && totalAnswered >= 20;
-    const newUnlocks = checkAchievements(updatedStats, newStreak, finalScore, isPerfect);
-    if (newUnlocks.length > 0) {
-      updatedStats.unlockedAchievements = [...new Set([...updatedStats.unlockedAchievements, ...newUnlocks])];
-    }
-    
-    setUserStats(updatedStats);
-    setGameState(prev => ({ 
-      ...prev, 
-      score: finalScore, 
-      questionsAnswered: totalAnswered, 
-      correctAnswers: isCorrect ? prev.correctAnswers + 1 : prev.correctAnswers, 
-      mistakes: totalMistakes, 
-      isGameOver: isOver, 
-      history: [...prev.history, { questionId: currentQ.id, isCorrect }] 
-    }));
-    setStreak(newStreak);
-    if (!isOver) setCurrentQuestionIndex(prev => prev + 1);
   };
 
   const handleExitGame = () => {
@@ -541,36 +748,49 @@ const App: React.FC = () => {
 
   const handleQuitToSplash = () => {
     audioService.playSfx('exit', 0.6, true);
-    if (window.confirm(t('quitConfirm'))) {
-      // Attempt to close the window (works in some PWA/mobile contexts)
-      window.close();
-      
-      // Fallback if window.close() is blocked by browser
-      setGameState(prev => ({ ...prev, nickname: '', score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
-      setStep('SPLASH');
-      setQuestions([]);
-      setCurrentQuestionIndex(0);
-      setStreak(0);
-      setIsPaused(false);
-    }
+    setModalConfig({
+      isOpen: true,
+      title: t('quitLabel'),
+      message: t('quitConfirm'),
+      isParentalGate: true,
+      confirmText: t('exit'),
+      cancelText: t('back'),
+      onConfirm: () => {
+        setGameState(prev => ({ ...prev, nickname: '', score: 0, questionsAnswered: 0, correctAnswers: 0, mistakes: 0, isGameOver: false, history: [] }));
+        setStep('SPLASH');
+        setQuestions([]);
+        setCurrentQuestionIndex(0);
+        setStreak(0);
+        setIsPaused(false);
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const resetAllProgress = () => {
-    if (window.confirm(t('resetConfirm'))) {
-      audioService.playSfx('exit', 0.6, true);
-      const initialStats: UserStats = { 
-        totalPoints: 0, totalCorrect: 0, totalAnswered: 0, maxStreak: 0, 
-        levelsCompleted: [], unlockedAchievements: [], categoryCorrect: {},
-        completedLevelCategories: {}, dailyChallengesCompleted: 0
-      };
-      setUserStats(initialStats);
-      setLevels(INITIAL_LEVELS);
-      setLeaderboard([]);
-      localStorage.clear();
-      setShowTrophyRoom(false);
-      setStep('SPLASH');
-      window.location.reload();
-    }
+    audioService.playSfx('exit', 0.6, true);
+    setModalConfig({
+      isOpen: true,
+      title: t('resetData'),
+      message: t('resetConfirm'),
+      isParentalGate: true,
+      confirmText: t('resetData'),
+      cancelText: t('back'),
+      onConfirm: () => {
+        const initialStats: UserStats = { 
+          totalPoints: 0, totalCorrect: 0, totalAnswered: 0, maxStreak: 0, 
+          levelsCompleted: [], unlockedAchievements: [], categoryCorrect: {},
+          completedLevelCategories: {}, dailyChallengesCompleted: 0
+        };
+        setUserStats(initialStats);
+        setLevels(INITIAL_LEVELS);
+        setLeaderboard([]);
+        localStorage.clear();
+        setShowTrophyRoom(false);
+        setStep('SPLASH');
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const t = (key: keyof typeof TRANSLATIONS) => (TRANSLATIONS as any)[key][gameState.language] || (TRANSLATIONS as any)[key]['English'] || key;
@@ -587,6 +807,20 @@ const App: React.FC = () => {
     <div className="flex-1 flex flex-col h-full grass-pattern relative overflow-hidden" onClick={handleInteraction}>
       <StadiumAtmosphere />
       <AnimatePresence>{step === 'SPLASH' && <SplashScreen key="splash" />}</AnimatePresence>
+      <AnimatePresence>
+        {showCopiedToast && (
+          <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: -20, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1000] bg-zinc-900 border border-white/10 px-6 py-3 rounded-full shadow-2xl">
+            <p className="text-white font-black text-[10px] uppercase tracking-widest">{t('copied')}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {fetchError && (
+          <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: -20, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[1000] bg-rose-500/90 border border-rose-400 px-6 py-3 rounded-full shadow-2xl">
+            <p className="text-white font-black text-[10px] uppercase tracking-widest">{fetchError}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {showDailyChallengeToast && (
           <motion.div 
@@ -669,7 +903,10 @@ const App: React.FC = () => {
                   <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowLeaderboard(true); }} className="h-12 md:h-16 bg-white/5 border border-white/10 text-white/60 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest">🏆 RANK</button>
                   <button onClick={() => { handleInteraction(); audioService.playSfx('click', 0.3); setShowTrophyRoom(true); }} className="h-12 md:h-16 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-black rounded-xl md:rounded-2xl uppercase text-[9px] md:text-[10px] tracking-widest">🏅 ROOM</button>
                 </div>
-                <div className="pt-4 flex justify-center">
+                <div className="pt-4 flex flex-col items-center gap-3">
+                   <button onClick={() => setModalConfig({ isOpen: true, title: t('privacyTitle'), message: t('privacyInfo'), onConfirm: () => setModalConfig(p => ({...p, isOpen: false})), confirmText: t('close'), cancelText: t('back') })} className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em] hover:text-white/40 transition-colors">
+                     {t('privacyTitle')}
+                   </button>
                    <button onClick={handleQuitToSplash} className="group flex items-center gap-2 px-6 py-2 rounded-full border border-white/5 bg-white/2 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all duration-300">
                      <span className="text-white/20 group-hover:text-rose-500/60 font-black text-[9px] tracking-[0.4em] uppercase">{t('quitLabel')}</span>
                    </button>
@@ -704,7 +941,7 @@ const App: React.FC = () => {
             <motion.div key="nick" variants={screenVariants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col items-center justify-center p-4">
               <div className="bg-black/60 backdrop-blur-2xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border border-white/10 w-full max-w-[340px] text-center shadow-2xl">
                 <h2 className="text-xl md:text-3xl font-black mb-6 md:mb-8 uppercase tracking-tighter">{t('enterNickname')}</h2>
-                <input type="text" value={gameState.nickname} placeholder="Messi10..." onChange={(e) => setGameState(p => ({...p, nickname: e.target.value.substring(0, 15)}))} className="w-full h-14 md:h-20 bg-white/5 border border-white/10 rounded-xl md:rounded-3xl px-6 text-white text-lg md:text-xl font-bold mb-6 md:mb-8 focus:outline-none focus:border-emerald-500 text-center placeholder:text-white/10" />
+                <input type="text" value={gameState.nickname} placeholder="Messi10..." onChange={(e) => setGameState(p => ({...p, nickname: filterProfanity(e.target.value.substring(0, 15))}))} className="w-full h-14 md:h-20 bg-white/5 border border-white/10 rounded-xl md:rounded-3xl px-6 text-white text-lg md:text-xl font-bold mb-6 md:mb-8 focus:outline-none focus:border-emerald-500 text-center placeholder:text-white/10" />
                 <button onClick={() => { audioService.playSfx('click', 0.4); setStep('CATEGORY_SELECT'); }} disabled={!gameState.nickname.trim()} className="w-full h-14 md:h-20 bg-emerald-500 font-black rounded-xl md:rounded-3xl uppercase text-xs md:text-sm tracking-widest disabled:opacity-20 active:scale-95 transition-all">{t('start')}</button>
               </div>
             </motion.div>
@@ -739,12 +976,15 @@ const App: React.FC = () => {
                 <div className="flex-1 flex flex-col items-center justify-center p-4">
                   <div className={`bg-black/90 backdrop-blur-3xl p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] border ${accuracyPercent >= 80 ? 'border-emerald-500/40 shadow-[0_0_80px_rgba(16,185,129,0.15)]' : 'border-rose-500/40 shadow-[0_0_80px_rgba(244,63,94,0.15)]'} text-center w-full max-w-[360px] shadow-2xl relative overflow-hidden`}>
                     <motion.img initial={{ scale: 0 }} animate={{ scale: 1 }} src={GAME_LOGO} className="w-10 h-10 md:w-16 mx-auto mb-4 md:mb-6" />
-                    <h1 className={`text-2xl md:text-5xl font-black mb-4 md:mb-6 uppercase tracking-tighter leading-none ${accuracyPercent >= 80 ? t('success') : t('gameOver')}`}>{accuracyPercent >= 80 ? t('success') : t('gameOver')}</h1>
+                    <h1 className={`text-2xl md:text-5xl font-black mb-4 md:mb-6 uppercase tracking-tighter leading-none ${accuracyPercent >= 80 ? 'text-emerald-500' : 'text-rose-500'}`}>{accuracyPercent >= 80 ? t('success') : t('gameOver')}</h1>
                     <div className="grid grid-cols-2 gap-2 md:gap-3 mb-6 md:mb-10 text-white">
                       <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('totalScoreLabel')}</span><p className="text-xl md:text-2xl font-black">{gameState.score}</p></div>
                       <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><span className="text-[7px] md:text-[8px] font-black text-white/30 uppercase block mb-1">{t('accuracyLabel')}</span><p className={`text-xl md:text-2xl font-black ${accuracyPercent > 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{accuracyPercent}%</p></div>
                     </div>
                     <div className="space-y-2 md:space-y-3 text-white">
+                      <button onClick={handleShare} className="w-full h-12 md:h-16 bg-white/5 border border-white/10 font-black rounded-xl md:rounded-2xl uppercase text-[10px] md:text-xs tracking-widest flex items-center justify-center gap-2">
+                        <span>📤</span> {t('shareBtn')}
+                      </button>
                       <button onClick={handleExitGame} className="w-full h-12 md:h-16 bg-emerald-500 font-black rounded-xl md:rounded-2xl uppercase text-[10px] md:text-xs tracking-widest">{t('playAgain')}</button>
                       <button onClick={() => { audioService.playSfx('playAgain', 0.6, true); handleStartQuiz(gameState.selectedCategory); }} className="w-full h-10 text-white/40 font-black uppercase text-[9px] md:text-[10px] tracking-widest">{t('retry')}</button>
                     </div>
@@ -850,6 +1090,18 @@ const App: React.FC = () => {
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
+      <AnimatePresence>
+        <Modal 
+          isOpen={modalConfig.isOpen} 
+          onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} 
+          onConfirm={modalConfig.onConfirm} 
+          title={modalConfig.title} 
+          message={modalConfig.message} 
+          confirmText={modalConfig.confirmText || t('start')} 
+          cancelText={modalConfig.cancelText || t('back')}
+          isParentalGate={modalConfig.isParentalGate}
+        />
       </AnimatePresence>
       <footer className="relative z-10 py-4 text-center mt-auto shrink-0">
         <p className="text-[7px] font-black text-white/10 uppercase tracking-[0.4em] mb-0.5">TAP FOOTBALL QUIZ 2026</p>

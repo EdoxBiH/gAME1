@@ -102,7 +102,14 @@ export const generateQuestions = async (
   
   const systemInstruction = `You are a world-class football (soccer) historian and trivia expert. 
 Your task is to generate high-quality, accurate, and engaging football trivia questions.
-CRITICAL RULES:
+
+CRITICAL FAMILY-FRIENDLY RULES:
+1. Content MUST be appropriate for all ages (G-rated).
+2. NO references to violence, gambling, alcohol, drugs, or political controversies.
+3. NO offensive, discriminatory, or inappropriate language.
+4. Focus strictly on football facts, history, players, and stadiums.
+
+TECHNICAL RULES:
 1. The entire content (question text, all 4 options, and the explanation) MUST be written in ${targetLang}.
 2. Ensure the correct answer is exactly one of the options.
 3. The explanation should be informative and provide context about the correct answer.
@@ -115,7 +122,11 @@ Exclude these question IDs: ${excludeIds.slice(-20).join(', ')}.
 If the category is 'ALL', provide a balanced mix of players, clubs, stadiums, national teams, and coaches.`;
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined");
+    }
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -147,6 +158,7 @@ If the category is 'ALL', provide a balanced mix of players, clubs, stadiums, na
     if (!resultText) throw new Error("Empty response from Gemini API");
     
     const parsed = JSON.parse(resultText);
+    if (!Array.isArray(parsed)) throw new Error("Gemini API response is not an array");
 
     return {
       isOffline: false,
