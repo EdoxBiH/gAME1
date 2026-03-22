@@ -39,7 +39,7 @@ class AudioService {
           playPromise.then(() => {
             audio.pause();
             audio.currentTime = 0;
-          }).catch(err => console.debug('Audio unlock skipped:', err));
+          }).catch(() => {});
         }
       });
     }
@@ -54,14 +54,20 @@ class AudioService {
 
   stopAll() {
     this.activeSounds.forEach(audio => {
-      audio.pause();
-      audio.currentTime = 0;
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch (e) {
+        // Silent fail in production
+      }
     });
     this.activeSounds.clear();
   }
 
   playSfx(type: SfxType | string, volume: number = 0.3, interruptAll: boolean = false) {
-    if (this.isMuted) return;
+    if (this.isMuted) {
+      return;
+    }
     
     if (interruptAll) {
       this.stopAll();
@@ -69,15 +75,24 @@ class AudioService {
 
     const audio = this.sfx[type];
     if (audio) {
-      audio.pause();
-      audio.currentTime = 0;
-      audio.volume = volume;
-      
-      this.activeSounds.add(audio);
-      audio.play().catch(err => {
-        console.debug('SFX blocked:', err);
-        this.activeSounds.delete(audio);
-      });
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = volume;
+        
+        this.activeSounds.add(audio);
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            // Success
+          }).catch(() => {
+            this.activeSounds.delete(audio);
+          });
+        }
+      } catch (e) {
+        // Silent fail
+      }
     }
   }
 
