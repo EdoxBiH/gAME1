@@ -1,15 +1,8 @@
-
-[
-  {
-    "relation": [
-      "delegate_permission/common.handle_all_urls"
-    ],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "com.tapfootball.quiz2026",
-      "sha256_cert_fingerprints": [
-        "OVDJE_ZALIJEPI_SVOJ_STVARNI_SHA_256_IZ_PLAY_KONZOLE"
-      ]
-    }
-  }
-]
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.g_ame_1.twa",
+        "sha256_cert_fingerprints": ["10:54:02:B7:03:91:BF:7B:D4:13:CB:0C:88:7F:99:3A:2A:52:94:FE:C1:4C:03:7F:E8:F8:F5:2F:90:05:6D:61"]
+      }
+    }]
